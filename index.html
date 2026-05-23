@@ -7,8 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Appello Gita">
-<title>Appello Gita</title>
+<meta name="apple-mobile-web-app-title" content="Appello uscita didattica">
+<title>Appello uscita didattica</title>
 
 <!-- jsPDF via CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1030,7 +1030,7 @@ body {
   <header id="global-header">
     <img id="header-icon" src="icons/logo-manzoni.png" alt="Logo scuola" style="height:40px;width:auto;object-fit:contain;">
     <div id="header-title-block">
-      <div id="trip-name">Appello Gita</div>
+      <div id="trip-name">Appello uscita didattica</div>
       <div id="trip-subtitle">Gestione presenze</div>
     </div>
     <div id="header-counter">
@@ -1071,7 +1071,9 @@ body {
      SCHERMATA SETUP (primo avvio)
      ============================================================ -->
 <div id="setup-screen">
-  <div class="setup-logo">🏔️</div>
+  <div class="setup-logo">
+  <img src="icons/logo-manzoni.png" alt="Logo scuola" style="height:64px;width:auto;object-fit:contain;">
+</div>
   <h1 class="setup-title">APPELLI USITA DIDATTICA</h1>
   <p class="setup-sub">Configura l'uscita didattica e importa le classi.</p>
 
@@ -1090,7 +1092,7 @@ body {
 
   <div style="max-width:400px;width:100%;margin-top:8px">
     <button class="btn-primary" id="btn-start-trip" onclick="startTrip()" disabled style="opacity:.5">
-      ✅ Inizia la gita
+      ✅ Inizia l'uscita!
     </button>
     <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:12px">
       Puoi aggiungere altre classi anche dopo l'avvio.
@@ -1126,9 +1128,9 @@ body {
 <div id="menu-overlay" onclick="closeMenu()"></div>
 <div id="side-menu">
   <div class="menu-section" style="padding-top:calc(20px + env(safe-area-inset-top,0px))">
-    <h3>Gita</h3>
+    <h3>Uscita didattica</h3>
     <button class="menu-item" onclick="openEditTrip(); closeMenu()">
-      <span class="icon"></span> Modifica nome gita
+      <span class="icon"></span> Modifica nome uscita
     </button>
     <button class="menu-item" onclick="openCustomPhaseEdit(); closeMenu()">
       <span class="icon"></span> Rinomina fase custom
@@ -1153,7 +1155,7 @@ body {
     </button>
   </div>
   <div class="menu-section" style="border: none">
-    <p style="font-size:11px;color:var(--text-muted);">Appello Gita v1.0 · Dati salvati in locale</p>
+    <p style="font-size:11px;color:var(--text-muted);">Appello uscita didattica v1.0 · Dati salvati in locale</p>
   </div>
 </div>
 
@@ -1172,7 +1174,7 @@ body {
     </div>
 
     <div class="detail-section">
-      <h4>Adesione alla gita</h4>
+      <h4>Adesione all'uscita</h4>
       <div class="toggle-wrap">
         <span class="toggle-label">Aderisce</span>
         <button class="toggle" id="detail-ade-toggle" onclick="toggleDetailAde()"></button>
@@ -1210,7 +1212,7 @@ body {
     <input class="input-field" id="add-cognome" placeholder="Cognome *" maxlength="40">
     <input class="input-field" id="add-nome" placeholder="Nome *" maxlength="40">
     <div class="toggle-wrap" style="margin-bottom:16px">
-      <span class="toggle-label">Aderisce alla gita</span>
+      <span class="toggle-label">Aderisce all'uscita didattica</span>
       <button class="toggle on" id="add-ade-toggle" onclick="this.classList.toggle('on')"></button>
     </div>
     <button class="btn-primary" onclick="confirmAddStudent()">➕ Aggiungi</button>
@@ -1227,7 +1229,7 @@ body {
       Aggiungi classe
       <button onclick="closeAddClassModal()">✕</button>
     </div>
-    <input class="input-field" id="new-class-name" placeholder="Nome classe (es. 3A)" maxlength="10">
+    <input class="input-field" id="new-class-name" placeholder="Nome classe (es. 2FS)" maxlength="10">
     <button class="btn-primary" onclick="confirmAddClass()">✅ Aggiungi classe</button>
   </div>
 </div>
@@ -1239,10 +1241,10 @@ body {
   <div id="edit-trip-sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">
-      Modifica nome gita
+      Modifica nome uscita didattica
       <button onclick="closeEditTrip()">✕</button>
     </div>
-    <input class="input-field" id="edit-trip-input" placeholder="Nome gita" maxlength="50">
+    <input class="input-field" id="edit-trip-input" placeholder="Nome uscita didattica" maxlength="50">
     <button class="btn-primary" onclick="saveEditTrip()">💾 Salva</button>
   </div>
 </div>
@@ -1276,7 +1278,7 @@ body {
 const STATE_KEY = 'appello_gita_v1';
 
 let state = {
-  tripName: 'Appello Gita',
+  tripName: 'Appello uscita didattica',
   customPhaseName: 'Fase personalizzata',
   activeClass: null,    // nome classe attiva
   activePhase: 0,       // indice fase attiva (0-3)
@@ -1568,7 +1570,7 @@ async function toggleStudentPhase(id, cn) {
   if (!s) return;
 
   // se non aderisce, non si può spuntare
-  if (!s.adesione) { showToast('Studente non aderisce alla gita'); return; }
+  if (!s.adesione) { showToast("Studente non aderisce all'uscita"); return; }
 
   const phase = state.activePhase;
 
@@ -1657,7 +1659,7 @@ function removeSetupClass(cn) {
 }
 
 function startTrip() {
-  const name = document.getElementById('setup-trip-name').value.trim() || 'Appello Gita';
+  const name = document.getElementById('setup-trip-name').value.trim() || 'Appello uscita didattica';
   const customPhase = document.getElementById('setup-custom-phase').value.trim() || 'Fase personalizzata';
 
   state.tripName = name;
@@ -2059,6 +2061,22 @@ function exportPDF() {
   doc.text(state.tripName, margin, y);
   y += 8;
 
+  // aggiungo logo in alto a destra nel PDF
+const logo = document.getElementById('header-icon');
+if (logo && logo.tagName === 'IMG') {
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = logo.naturalWidth;
+    canvas.height = logo.naturalHeight;
+    ctx.drawImage(logo, 0, 0);
+    const imgData = canvas.toDataURL('image/png');
+    const logoH = 15; // altezza in mm nel PDF
+    const logoW = (logo.naturalWidth / logo.naturalHeight) * logoH;
+    doc.addImage(imgData, 'PNG', 196 - logoW, margin - 5, logoW, logoH);
+  } catch(e) { console.warn('logo non aggiunto al PDF', e); }
+}
+
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100);
@@ -2092,21 +2110,6 @@ function exportPDF() {
     doc.text(summary, margin, y);
     y += 8;
 
-// aggiungo logo in alto a destra nel PDF
-const logo = document.getElementById('header-icon');
-if (logo && logo.tagName === 'IMG') {
-  try {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = logo.naturalWidth;
-    canvas.height = logo.naturalHeight;
-    ctx.drawImage(logo, 0, 0);
-    const imgData = canvas.toDataURL('image/png');
-    const logoH = 15; // altezza in mm nel PDF
-    const logoW = (logo.naturalWidth / logo.naturalHeight) * logoH;
-    doc.addImage(imgData, 'PNG', 196 - logoW, margin - 5, logoW, logoH);
-  } catch(e) { console.warn('logo non aggiunto al PDF', e); }
-}
 
     // intestazione tabella
     doc.setFontSize(8);
@@ -2184,7 +2187,7 @@ function registerSW() {
   if (!('serviceWorker' in navigator)) return;
   // registro inline come blob per evitare file esterni
   const swCode = `
-    const CACHE = 'appello-gita-v1';
+    const CACHE = 'appello-uscita-v1';
     const ASSETS = [self.location.href.replace('/sw-blob.js', '') || '/'];
 
     self.addEventListener('install', e => {
@@ -2223,9 +2226,9 @@ function registerSW() {
    ============================================================ */
 (function injectManifest() {
   const manifest = {
-    name: 'Appello Gita Scolastica',
-    short_name: 'Appello Gita',
-    description: 'Gestione presenze gita scolastica in montagna',
+    name: 'Appello uscita didattica',
+    short_name: 'Appello uscita didattica',
+    description: 'Gestione presenze uscita didattica',
     start_url: '.',
     display: 'standalone',
     orientation: 'portrait',
