@@ -1,0 +1,2252 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#BD2A00">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Appello Gita">
+<title>Appello Gita</title>
+
+<!-- jsPDF via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- jsQR via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&family=Lora:ital,wght@0,400;0,600;1,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   VARIABILI E RESET
+   ============================================================ */
+:root {
+  --primary-brand: #BD2A00;
+  --primary-dark: #8F1F00;
+  --accent-arctic: #003580;
+  --accent-arctic-hover: #002252;
+  --accent-eu-gold: #FFCC00;
+  --text-dark: #1A1A1A;
+  --text-muted: #5C6F84;
+  --bg-main: #FFFFFF;
+  --bg-alternate: #F9F9F9;
+  --bg-slim: #002252;
+  --border-color: #E0E5EB;
+  --font-sans: 'Titillium Web', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Lora', Georgia, serif;
+  --font-mono: 'Roboto Mono', monospace;
+
+  /* stati fasi */
+  --color-present: #1B8A4B;
+  --color-absent: #BD2A00;
+  --color-pending: #E0E5EB;
+  --color-no-ade: #9AA8B5;
+
+  /* spacing */
+  --header-h: 64px;
+  --tabs-h: 52px;
+  --phases-h: 56px;
+  --bottom-safe: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-dark: #F0F2F5;
+    --text-muted: #8FA3B4;
+    --bg-main: #0F1923;
+    --bg-alternate: #1A2530;
+    --border-color: #2A3A4A;
+    --color-pending: #2A3A4A;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-main);
+  color: var(--text-dark);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* ============================================================
+   LAYOUT PRINCIPALE
+   ============================================================ */
+#app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+
+/* ---- HEADER GLOBALE ---- */
+#global-header {
+  background: var(--primary-brand);
+  color: #fff;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+
+#header-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+#header-title-block { flex: 1; min-width: 0; }
+#trip-name {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#trip-subtitle {
+  font-size: 11px;
+  opacity: .8;
+  font-weight: 400;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+#header-counter {
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 20px;
+  padding: 4px 12px;
+  text-align: center;
+  flex-shrink: 0;
+}
+#header-counter .num { font-size: 20px; font-weight: 700; display: block; line-height: 1; }
+#header-counter .lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .6px; opacity: .75; }
+
+#btn-menu {
+  background: none; border: none; color: #fff;
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  font-size: 22px; cursor: pointer; border-radius: 8px;
+  flex-shrink: 0;
+}
+#btn-menu:active { background: rgba(255,255,255,.15); }
+
+/* ---- TAB CLASSI ---- */
+#class-tabs-bar {
+  background: var(--bg-slim);
+  height: var(--tabs-h);
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  flex-shrink: 0;
+  -webkit-overflow-scrolling: touch;
+}
+#class-tabs-bar::-webkit-scrollbar { display: none; }
+
+.class-tab {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all .15s;
+  gap: 1px;
+}
+.class-tab .tab-name {
+  color: rgba(255,255,255,.6);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .4px;
+}
+.class-tab .tab-count {
+  color: rgba(255,255,255,.4);
+  font-size: 10px;
+  font-family: var(--font-mono);
+}
+.class-tab.active {
+  border-bottom-color: var(--accent-eu-gold);
+}
+.class-tab.active .tab-name { color: #fff; }
+.class-tab.active .tab-count { color: var(--accent-eu-gold); }
+
+#btn-add-class {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  width: 52px;
+  color: rgba(255,255,255,.5);
+  font-size: 24px;
+  cursor: pointer;
+  background: none; border: none;
+}
+#btn-add-class:active { color: #fff; }
+
+/* ---- SELETTORE FASI ---- */
+#phase-selector-bar {
+  background: var(--bg-alternate);
+  border-bottom: 1px solid var(--border-color);
+  height: var(--phases-h);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+#phase-selector-bar::-webkit-scrollbar { display: none; }
+
+.phase-btn {
+  flex-shrink: 0;
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-main);
+  color: var(--text-muted);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+  letter-spacing: .3px;
+}
+.phase-btn.active {
+  background: var(--accent-arctic);
+  border-color: var(--accent-arctic);
+  color: #fff;
+}
+.phase-btn:active { opacity: .75; }
+
+/* ---- CONTENUTO CLASSI ---- */
+#class-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.class-view {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+.class-view.active { display: flex; }
+
+/* search bar */
+.search-bar {
+  padding: 10px 12px 6px;
+  flex-shrink: 0;
+}
+.search-input {
+  width: 100%;
+  background: var(--bg-alternate);
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 15px;
+  font-family: var(--font-sans);
+  color: var(--text-dark);
+  outline: none;
+  transition: border-color .15s;
+}
+.search-input:focus { border-color: var(--accent-arctic); }
+.search-input::placeholder { color: var(--text-muted); }
+
+/* stats bar per classe */
+.class-stats {
+  display: flex;
+  gap: 8px;
+  padding: 4px 12px 8px;
+  flex-shrink: 0;
+}
+.stat-chip {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-weight: 500;
+}
+.stat-chip.total { background: var(--bg-alternate); color: var(--text-muted); border: 1px solid var(--border-color); }
+.stat-chip.present { background: #E8F5EE; color: var(--color-present); }
+.stat-chip.absent { background: #FDEAE6; color: var(--color-absent); }
+
+@media (prefers-color-scheme: dark) {
+  .stat-chip.present { background: #0D2E1B; }
+  .stat-chip.absent { background: #2E1008; }
+}
+
+/* lista studenti */
+.student-list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 12px;
+  padding-bottom: calc(80px + var(--bottom-safe));
+}
+
+/* ---- CARD STUDENTE ---- */
+.student-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-main);
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: transform .1s, box-shadow .1s;
+  -webkit-user-select: none;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+.student-card:active { transform: scale(.98); }
+.student-card.no-ade {
+  opacity: .55;
+}
+
+/* indicatore laterale colorato */
+.student-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  border-radius: 12px 0 0 12px;
+  background: var(--color-pending);
+  transition: background .2s;
+}
+.student-card.status-present::before { background: var(--color-present); }
+.student-card.status-absent::before { background: var(--color-absent); }
+
+/* avatar */
+.student-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--bg-alternate);
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: all .2s;
+}
+.student-card.status-present .student-avatar {
+  background: var(--color-present);
+  border-color: var(--color-present);
+  color: #fff;
+}
+.student-card.status-absent .student-avatar {
+  background: var(--color-absent);
+  border-color: var(--color-absent);
+  color: #fff;
+}
+
+/* testo nome */
+.student-info { flex: 1; min-width: 0; }
+.student-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.student-name span.nome { font-weight: 400; }
+.student-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* indicatori fasi (puntini) */
+.phase-dots {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.phase-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-pending);
+  border: 1.5px solid var(--border-color);
+  transition: all .2s;
+}
+.phase-dot.done { background: var(--color-present); border-color: var(--color-present); }
+.phase-dot.active-phase { box-shadow: 0 0 0 2px var(--accent-arctic); }
+
+/* ============================================================
+   SCHERMATA SETUP (primo avvio)
+   ============================================================ */
+#setup-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-main);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 48px 24px 32px;
+  overflow-y: auto;
+}
+
+.setup-logo {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+.setup-title {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text-dark);
+  text-align: center;
+  margin-bottom: 6px;
+}
+.setup-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 32px;
+  max-width: 320px;
+}
+
+.setup-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-alternate);
+  border: 1.5px solid var(--border-color);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.setup-card h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.input-field {
+  width: 100%;
+  background: var(--bg-main);
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 15px;
+  font-family: var(--font-sans);
+  color: var(--text-dark);
+  margin-bottom: 10px;
+  outline: none;
+  transition: border-color .15s;
+}
+.input-field:focus { border-color: var(--accent-arctic); }
+.input-field::placeholder { color: var(--text-muted); }
+
+.btn-primary {
+  width: 100%;
+  background: var(--primary-brand);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  letter-spacing: .3px;
+  transition: background .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-primary:active { background: var(--primary-dark); }
+
+.btn-secondary {
+  width: 100%;
+  background: transparent;
+  color: var(--accent-arctic);
+  border: 1.5px solid var(--accent-arctic);
+  border-radius: 12px;
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.btn-secondary:active { background: var(--accent-arctic); color: #fff; }
+
+#setup-classes-list { margin-top: 10px; }
+.setup-class-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-arctic);
+  color: #fff;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 4px;
+}
+.setup-class-chip button {
+  background: none; border: none; color: rgba(255,255,255,.8);
+  font-size: 16px; cursor: pointer; padding: 0; line-height: 1;
+}
+
+/* ============================================================
+   SCANNER QR
+   ============================================================ */
+#qr-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  z-index: 600;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0;
+}
+#qr-modal.open { display: flex; }
+
+#qr-header {
+  width: 100%;
+  background: #000;
+  padding: 16px 20px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#qr-header h2 { color: #fff; font-size: 17px; font-weight: 700; flex: 1; }
+#btn-qr-close { background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
+
+#qr-video-wrap {
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  margin: 0 auto;
+}
+#qr-video {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+  background: #111;
+}
+#qr-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.qr-frame {
+  width: 65%;
+  aspect-ratio: 1;
+  border: 2px solid var(--accent-eu-gold);
+  border-radius: 12px;
+  box-shadow: 0 0 0 2000px rgba(0,0,0,.35);
+  position: relative;
+}
+.qr-frame::before, .qr-frame::after,
+.qr-frame span::before, .qr-frame span::after {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+  border-color: var(--accent-eu-gold);
+  border-style: solid;
+}
+.qr-frame::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+.qr-frame::after { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+.qr-frame span::before { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+.qr-frame span::after { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+
+#qr-status {
+  color: #fff;
+  text-align: center;
+  padding: 16px 20px;
+  font-size: 14px;
+  opacity: .85;
+}
+#qr-canvas { display: none; }
+
+/* modal upload manuale */
+#qr-upload-area {
+  width: 100%;
+  max-width: 480px;
+  padding: 0 20px 20px;
+}
+#qr-file-input { display: none; }
+.btn-upload {
+  width: 100%;
+  background: rgba(255,255,255,.1);
+  border: 1.5px solid rgba(255,255,255,.3);
+  border-radius: 12px;
+  padding: 14px;
+  color: #fff;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* ============================================================
+   MENU LATERALE / DRAWER
+   ============================================================ */
+#menu-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 400;
+}
+#menu-overlay.open { display: block; }
+
+#side-menu {
+  position: fixed;
+  top: 0; right: 0;
+  width: min(320px, 85vw);
+  height: 100%;
+  background: var(--bg-main);
+  z-index: 401;
+  transform: translateX(100%);
+  transition: transform .25s ease;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-bottom: var(--bottom-safe);
+}
+#side-menu.open { transform: translateX(0); }
+
+.menu-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+.menu-section h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  color: var(--text-dark);
+  font-size: 15px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  border-radius: 8px;
+}
+.menu-item .icon { font-size: 22px; width: 28px; text-align: center; }
+.menu-item:active { background: var(--bg-alternate); }
+.menu-item.danger { color: var(--primary-brand); }
+
+/* ============================================================
+   MODAL DETTAGLIO STUDENTE
+   ============================================================ */
+#detail-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 300;
+  align-items: flex-end;
+}
+#detail-modal.open { display: flex; }
+
+#detail-sheet {
+  width: 100%;
+  max-height: 90vh;
+  background: var(--bg-main);
+  border-radius: 20px 20px 0 0;
+  overflow-y: auto;
+  padding: 0 0 calc(24px + var(--bottom-safe));
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.sheet-handle {
+  width: 40px; height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+
+.detail-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.detail-avatar {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: var(--accent-arctic);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700;
+  flex-shrink: 0;
+}
+.detail-name { font-size: 20px; font-weight: 700; }
+.detail-class { font-size: 13px; color: var(--text-muted); font-family: var(--font-mono); }
+
+.detail-section {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+.detail-section h4 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.phase-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.phase-row:last-child { border-bottom: none; }
+
+.phase-status-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  flex-shrink: 0;
+  transition: all .2s;
+}
+.phase-status-dot.done { background: var(--color-present); border-color: var(--color-present); }
+
+.phase-row-name { flex: 1; font-size: 14px; font-weight: 600; }
+.phase-row-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  text-align: right;
+}
+
+/* note */
+.notes-textarea {
+  width: 100%;
+  background: var(--bg-alternate);
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  color: var(--text-dark);
+  min-height: 80px;
+  resize: none;
+  outline: none;
+  transition: border-color .15s;
+}
+.notes-textarea:focus { border-color: var(--accent-arctic); }
+
+/* toggle adesione */
+.toggle-wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0;
+}
+.toggle-label { font-size: 15px; font-weight: 600; }
+.toggle {
+  width: 50px; height: 28px;
+  background: var(--border-color);
+  border-radius: 14px;
+  position: relative;
+  cursor: pointer;
+  transition: background .2s;
+  border: none;
+}
+.toggle.on { background: var(--color-present); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 22px; height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.toggle.on::after { transform: translateX(22px); }
+
+/* bottoni nel detail */
+.detail-actions {
+  display: flex;
+  gap: 10px;
+  padding: 14px 20px 0;
+}
+.btn-detail {
+  flex: 1;
+  background: var(--bg-alternate);
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  color: var(--text-dark);
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-detail:active { background: var(--border-color); }
+.btn-detail.danger { color: var(--primary-brand); border-color: var(--primary-brand); background: #FDEAE6; }
+
+@media (prefers-color-scheme: dark) {
+  .btn-detail.danger { background: #2E1008; }
+}
+
+/* ============================================================
+   MODAL AGGIUNTA MANUALE STUDENTE
+   ============================================================ */
+#add-student-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 300;
+  align-items: flex-end;
+}
+#add-student-modal.open { display: flex; }
+
+#add-student-sheet {
+  width: 100%;
+  background: var(--bg-main);
+  border-radius: 20px 20px 0 0;
+  padding: 0 20px calc(24px + var(--bottom-safe));
+  animation: slideUp .25s ease;
+}
+
+/* ============================================================
+   MODAL EDIT NOME GITA
+   ============================================================ */
+#edit-trip-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 300;
+  align-items: flex-end;
+}
+#edit-trip-modal.open { display: flex; }
+#edit-trip-sheet {
+  width: 100%;
+  background: var(--bg-main);
+  border-radius: 20px 20px 0 0;
+  padding: 0 20px calc(24px + var(--bottom-safe));
+  animation: slideUp .25s ease;
+}
+
+/* ============================================================
+   MODAL FASE CUSTOM
+   ============================================================ */
+#custom-phase-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 300;
+  align-items: flex-end;
+}
+#custom-phase-modal.open { display: flex; }
+#custom-phase-sheet {
+  width: 100%;
+  background: var(--bg-main);
+  border-radius: 20px 20px 0 0;
+  padding: 0 20px calc(24px + var(--bottom-safe));
+  animation: slideUp .25s ease;
+}
+
+/* sheet header generico */
+.sheet-title {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 16px 0 14px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sheet-title button { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
+
+/* ============================================================
+   FAB (aggiungi studente)
+   ============================================================ */
+#fab {
+  position: fixed;
+  bottom: calc(20px + var(--bottom-safe));
+  right: 20px;
+  width: 56px; height: 56px;
+  background: var(--accent-arctic);
+  border-radius: 50%;
+  border: none;
+  color: #fff;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,53,128,.35);
+  z-index: 200;
+  transition: transform .15s;
+}
+#fab:active { transform: scale(.9); }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+#toast {
+  position: fixed;
+  bottom: calc(90px + var(--bottom-safe));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1A1A1A;
+  color: #fff;
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity .2s, transform .2s;
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: calc(100vw - 40px);
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ============================================================
+   SCHERMATA VUOTA
+   ============================================================ */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  gap: 10px;
+}
+.empty-state .icon { font-size: 48px; }
+.empty-state h3 { font-size: 17px; font-weight: 700; }
+.empty-state p { font-size: 14px; color: var(--text-muted); }
+
+/* ============================================================
+   EMPTY / NO CLASSES
+   ============================================================ */
+#no-classes-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  gap: 14px;
+}
+#no-classes-view .icon { font-size: 56px; }
+#no-classes-view h2 { font-size: 20px; font-weight: 700; }
+#no-classes-view p { font-size: 14px; color: var(--text-muted); max-width: 280px; }
+
+/* ============================================================
+   LOADING
+   ============================================================ */
+#loading {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg-main);
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- HEADER GLOBALE -->
+  <header id="global-header">
+    <img id="header-icon" src="assets/img/logo.png" alt="Logo scuola" style="height:40px;width:auto;object-fit:contain;">
+    <div id="header-title-block">
+      <div id="trip-name">Appello Gita</div>
+      <div id="trip-subtitle">Gestione presenze</div>
+    </div>
+    <div id="header-counter">
+      <span class="num" id="counter-present">0</span>
+      <span class="lbl">presenti</span>
+    </div>
+    <button id="btn-menu" title="Menu">☰</button>
+  </header>
+
+  <!-- TAB CLASSI -->
+  <nav id="class-tabs-bar">
+    <!-- popolato da JS -->
+    <button id="btn-add-class" title="Aggiungi classe" onclick="openAddClassManual()">＋</button>
+  </nav>
+
+  <!-- SELETTORE FASI -->
+  <div id="phase-selector-bar">
+    <!-- popolato da JS -->
+  </div>
+
+  <!-- CONTENUTO PRINCIPALE -->
+  <main id="class-content">
+    <div id="no-classes-view">
+      <div class="icon">📋</div>
+      <h2>Nessuna classe</h2>
+      <p>Scansiona un QR code o aggiungi una classe manualmente per iniziare.</p>
+      <button class="btn-primary" style="max-width:240px;margin-top:8px" onclick="openQrScanner()">📷 Scansiona QR</button>
+      <button class="btn-secondary" style="max-width:240px" onclick="openAddClassManual()">✏️ Aggiungi manuale</button>
+    </div>
+  </main>
+
+  <!-- FAB -->
+  <button id="fab" title="Aggiungi studente">＋</button>
+
+</div>
+
+<!-- ============================================================
+     SCHERMATA SETUP (primo avvio)
+     ============================================================ -->
+<div id="setup-screen">
+  <div class="setup-logo">🏔️</div>
+  <h1 class="setup-title">APPELLI USITA DIDATTICA</h1>
+  <p class="setup-sub">Configura l'uscita didattica e importa le classi.</p>
+
+  <div class="setup-card" style="max-width:400px;width:100%">
+    <h3>Descrizione uscita</h3>
+    <input class="input-field" id="setup-trip-name" placeholder="es. escursione Monte Grumello" maxlength="50">
+    <input class="input-field" id="setup-custom-phase" placeholder="Fase personalizzata (es. appello in vetta)" maxlength="40">
+  </div>
+
+  <div class="setup-card" style="max-width:400px;width:100%">
+    <h3>Importa classi</h3>
+    <div id="setup-classes-list"></div>
+    <button class="btn-primary" onclick="openQrScanner(true)">Scansiona QR lista studenti</button>
+    <button class="btn-secondary" onclick="openAddClassManual(true)">Aggiunta classe manuale</button>
+  </div>
+
+  <div style="max-width:400px;width:100%;margin-top:8px">
+    <button class="btn-primary" id="btn-start-trip" onclick="startTrip()" disabled style="opacity:.5">
+      ✅ Inizia la gita
+    </button>
+    <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:12px">
+      Puoi aggiungere altre classi anche dopo l'avvio.
+    </p>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCANNER QR
+     ============================================================ -->
+<div id="qr-modal">
+  <div id="qr-header">
+    <h2>Scansiona QR classe</h2>
+    <button id="btn-qr-close" onclick="closeQrScanner()">✕</button>
+  </div>
+  <div id="qr-video-wrap">
+    <video id="qr-video" playsinline muted autoplay></video>
+    <div id="qr-overlay"><div class="qr-frame"><span></span></div></div>
+    <canvas id="qr-canvas"></canvas>
+  </div>
+  <p id="qr-status">Inquadra il QR code con la lista studenti</p>
+  <div id="qr-upload-area">
+    <input type="file" id="qr-file-input" accept="image/*" onchange="handleQrFile(event)">
+    <button class="btn-upload" onclick="document.getElementById('qr-file-input').click()">
+      Carica immagine QR
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================
+     MENU LATERALE
+     ============================================================ -->
+<div id="menu-overlay" onclick="closeMenu()"></div>
+<div id="side-menu">
+  <div class="menu-section" style="padding-top:calc(20px + env(safe-area-inset-top,0px))">
+    <h3>Gita</h3>
+    <button class="menu-item" onclick="openEditTrip(); closeMenu()">
+      <span class="icon"></span> Modifica nome gita
+    </button>
+    <button class="menu-item" onclick="openCustomPhaseEdit(); closeMenu()">
+      <span class="icon"></span> Rinomina fase custom
+    </button>
+    <button class="menu-item" onclick="openQrScanner(); closeMenu()">
+      <span class="icon"></span> Scansiona QR (nuova classe)
+    </button>
+    <button class="menu-item" onclick="openAddClassManual(); closeMenu()">
+      <span class="icon"></span> Aggiungi classe manuale
+    </button>
+  </div>
+  <div class="menu-section">
+    <h3>Export</h3>
+    <button class="menu-item" onclick="exportPDF(); closeMenu()">
+      <span class="icon"></span> Esporta PDF riepilogo
+    </button>
+  </div>
+  <div class="menu-section">
+    <h3>Dati</h3>
+    <button class="menu-item danger" onclick="confirmReset(); closeMenu()">
+      <span class="icon"></span> Azzera tutto e ricomincia
+    </button>
+  </div>
+  <div class="menu-section" style="border: none">
+    <p style="font-size:11px;color:var(--text-muted);">Appello Gita v1.0 · Dati salvati in locale</p>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL DETTAGLIO STUDENTE
+     ============================================================ -->
+<div id="detail-modal" onclick="handleDetailOverlayClick(event)">
+  <div id="detail-sheet">
+    <div class="sheet-handle"></div>
+    <div class="detail-header">
+      <div class="detail-avatar" id="detail-avatar">AB</div>
+      <div>
+        <div class="detail-name" id="detail-fullname">Nome Cognome</div>
+        <div class="detail-class" id="detail-class-label">Classe</div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h4>Adesione alla gita</h4>
+      <div class="toggle-wrap">
+        <span class="toggle-label">Aderisce</span>
+        <button class="toggle" id="detail-ade-toggle" onclick="toggleDetailAde()"></button>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h4>Stato fasi</h4>
+      <div id="detail-phases-list"></div>
+    </div>
+
+    <div class="detail-section">
+      <h4>Note</h4>
+      <textarea class="notes-textarea" id="detail-notes" placeholder="Note libere..."></textarea>
+    </div>
+
+    <div class="detail-actions">
+      <button class="btn-detail" onclick="saveDetailNotes()">💾 Salva note</button>
+      <button class="btn-detail danger" onclick="deleteStudentFromDetail()">Rimuovi</button>
+      <button class="btn-detail" onclick="closeDetail()">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL AGGIUNTA STUDENTE
+     ============================================================ -->
+<div id="add-student-modal" onclick="if(event.target===this)closeAddStudent()">
+  <div id="add-student-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      Aggiungi studente
+      <button onclick="closeAddStudent()">✕</button>
+    </div>
+    <input class="input-field" id="add-cognome" placeholder="Cognome *" maxlength="40">
+    <input class="input-field" id="add-nome" placeholder="Nome *" maxlength="40">
+    <div class="toggle-wrap" style="margin-bottom:16px">
+      <span class="toggle-label">Aderisce alla gita</span>
+      <button class="toggle on" id="add-ade-toggle" onclick="this.classList.toggle('on')"></button>
+    </div>
+    <button class="btn-primary" onclick="confirmAddStudent()">➕ Aggiungi</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL AGGIUNTA CLASSE MANUALE
+     ============================================================ -->
+<div id="add-class-modal" onclick="if(event.target===this)closeAddClassModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;">
+  <div style="width:100%;background:var(--bg-main);border-radius:20px 20px 0 0;padding:0 20px calc(24px + var(--bottom-safe));animation:slideUp .25s ease">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      Aggiungi classe
+      <button onclick="closeAddClassModal()">✕</button>
+    </div>
+    <input class="input-field" id="new-class-name" placeholder="Nome classe (es. 3A)" maxlength="10">
+    <button class="btn-primary" onclick="confirmAddClass()">✅ Aggiungi classe</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL EDIT NOME GITA
+     ============================================================ -->
+<div id="edit-trip-modal" onclick="if(event.target===this)closeEditTrip()">
+  <div id="edit-trip-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      Modifica nome gita
+      <button onclick="closeEditTrip()">✕</button>
+    </div>
+    <input class="input-field" id="edit-trip-input" placeholder="Nome gita" maxlength="50">
+    <button class="btn-primary" onclick="saveEditTrip()">💾 Salva</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL FASE CUSTOM
+     ============================================================ -->
+<div id="custom-phase-modal" onclick="if(event.target===this)closeCustomPhaseEdit()">
+  <div id="custom-phase-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      Rinomina fase personalizzata
+      <button onclick="closeCustomPhaseEdit()">✕</button>
+    </div>
+    <input class="input-field" id="custom-phase-input" placeholder="Nome fase" maxlength="40">
+    <button class="btn-primary" onclick="saveCustomPhase()">💾 Salva</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ============================================================
+     JAVASCRIPT PRINCIPALE
+     ============================================================ -->
+<script>
+/* ============================================================
+   STATO GLOBALE
+   ============================================================ */
+// qui tengo tutto lo stato dell'app; viene serializzato in localStorage ad ogni modifica
+const STATE_KEY = 'appello_gita_v1';
+
+let state = {
+  tripName: 'Appello Gita',
+  customPhaseName: 'Fase personalizzata',
+  activeClass: null,    // nome classe attiva
+  activePhase: 0,       // indice fase attiva (0-3)
+  classes: {},          // { "3A": [ { id, cognome, nome, adesione, phases: [{ts, lat, lng}|null], notes } ] }
+};
+
+// le fasi fisse (0-3) + 1 custom
+const PHASE_NAMES_BASE = ['Adesione', 'Partenza', 'Biglietto treno', 'Ritorno'];
+function getPhaseNames() {
+  return [...PHASE_NAMES_BASE.slice(1), state.customPhaseName];
+  // indici reali: 0=Partenza, 1=Biglietto, 2=Ritorno, 3=Custom
+  // l'adesione è un campo separato, non una "fase di check"
+}
+// le fasi di check sono 4 (0..3), l'adesione è gestita a parte
+
+/* ============================================================
+   PERSISTENZA
+   ============================================================ */
+function saveState() {
+  // qui salvo lo stato nel localStorage
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e) { console.warn('localStorage pieno', e); }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (raw) state = { ...state, ...JSON.parse(raw) };
+  } catch(e) { console.warn('errore caricamento stato', e); }
+}
+
+/* ============================================================
+   INIZIALIZZAZIONE
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+
+  const hasClasses = Object.keys(state.classes).length > 0;
+  if (hasClasses) {
+    document.getElementById('setup-screen').style.display = 'none';
+    renderAll();
+  } else {
+    // setup screen attiva
+    document.getElementById('setup-screen').style.display = 'flex';
+  }
+
+  // service worker
+  registerSW();
+});
+
+function renderAll() {
+  renderHeader();
+  renderTabs();
+  renderPhaseSelector();
+  renderCurrentClass();
+  updateGlobalCounter();
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+function renderHeader() {
+  document.getElementById('trip-name').textContent = state.tripName;
+}
+
+function updateGlobalCounter() {
+  const phase = state.activePhase;
+  let present = 0;
+  Object.values(state.classes).forEach(students => {
+    students.forEach(s => {
+      if (s.adesione && s.phases[phase]) present++;
+    });
+  });
+  document.getElementById('counter-present').textContent = present;
+}
+
+/* ============================================================
+   TAB CLASSI
+   ============================================================ */
+function renderTabs() {
+  const bar = document.getElementById('class-tabs-bar');
+  // rimuovo vecchie tab ma tengo il bottone +
+  const btn = document.getElementById('btn-add-class');
+  bar.innerHTML = '';
+  bar.appendChild(btn);
+
+  const classNames = Object.keys(state.classes).sort();
+
+  if (classNames.length === 0) {
+    document.getElementById('no-classes-view').style.display = 'flex';
+    document.getElementById('fab').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('no-classes-view').style.display = 'none';
+  document.getElementById('fab').style.display = 'flex';
+
+  if (!state.activeClass || !state.classes[state.activeClass]) {
+    state.activeClass = classNames[0];
+  }
+
+  classNames.forEach(cn => {
+    const students = state.classes[cn];
+    const adherent = students.filter(s => s.adesione);
+    const present = adherent.filter(s => s.phases[state.activePhase]).length;
+
+    const tab = document.createElement('div');
+    tab.className = 'class-tab' + (cn === state.activeClass ? ' active' : '');
+    tab.dataset.class = cn;
+    tab.innerHTML = `<span class="tab-name">${cn}</span><span class="tab-count">${present}/${adherent.length}</span>`;
+    tab.addEventListener('click', () => switchClass(cn));
+    bar.insertBefore(tab, btn);
+  });
+}
+
+function switchClass(cn) {
+  state.activeClass = cn;
+  saveState();
+  renderTabs();
+  renderCurrentClass();
+}
+
+/* ============================================================
+   SELETTORE FASI
+   ============================================================ */
+function renderPhaseSelector() {
+  const bar = document.getElementById('phase-selector-bar');
+  bar.innerHTML = '';
+  getPhaseNames().forEach((name, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'phase-btn' + (i === state.activePhase ? ' active' : '');
+    btn.textContent = name;
+    btn.addEventListener('click', () => setActivePhase(i));
+    bar.appendChild(btn);
+  });
+}
+
+function setActivePhase(i) {
+  state.activePhase = i;
+  saveState();
+  renderPhaseSelector();
+  renderCurrentClass();
+  updateGlobalCounter();
+  renderTabs();
+}
+
+/* ============================================================
+   LISTA STUDENTI
+   ============================================================ */
+function renderCurrentClass() {
+  const content = document.getElementById('class-content');
+
+  // rimuovo tutte le view esistenti
+  content.querySelectorAll('.class-view').forEach(el => el.remove());
+
+  const classNames = Object.keys(state.classes).sort();
+  if (classNames.length === 0) return;
+
+  classNames.forEach(cn => {
+    const view = buildClassView(cn);
+    view.classList.toggle('active', cn === state.activeClass);
+    content.appendChild(view);
+  });
+}
+
+function buildClassView(cn) {
+  const students = state.classes[cn] || [];
+  // ordino per cognome
+  const sorted = [...students].sort((a, b) => a.cognome.localeCompare(b.cognome));
+  const phase = state.activePhase;
+
+  const view = document.createElement('div');
+  view.className = 'class-view';
+  view.dataset.class = cn;
+
+  // search
+  const searchBar = document.createElement('div');
+  searchBar.className = 'search-bar';
+  searchBar.innerHTML = `<input class="search-input" placeholder="🔍 Cerca studente..." oninput="filterStudents('${cn}', this.value)">`;
+  view.appendChild(searchBar);
+
+  // stats
+  const adherent = sorted.filter(s => s.adesione);
+  const present = adherent.filter(s => s.phases[phase]);
+  const absent = adherent.length - present.length;
+
+  const stats = document.createElement('div');
+  stats.className = 'class-stats';
+  stats.innerHTML = `
+    <span class="stat-chip total">Tot: ${sorted.length}</span>
+    <span class="stat-chip total">Aderenti: ${adherent.length}</span>
+    <span class="stat-chip present">✓ ${present.length}</span>
+    <span class="stat-chip absent">✗ ${absent}</span>
+  `;
+  view.appendChild(stats);
+
+  // lista
+  const list = document.createElement('div');
+  list.className = 'student-list';
+  list.id = `list-${cn}`;
+
+  if (sorted.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">👤</div><h3>Nessuno studente</h3><p>Aggiungi studenti con il pulsante +</p></div>`;
+  } else {
+    sorted.forEach(s => {
+      list.appendChild(buildStudentCard(s, cn));
+    });
+  }
+  view.appendChild(list);
+
+  return view;
+}
+
+function buildStudentCard(s, cn) {
+  const phase = state.activePhase;
+  const isDone = !!s.phases[phase];
+  const isActive = !isDone; // la fase corrente è "attiva" da spuntare
+
+  const card = document.createElement('div');
+  card.className = 'student-card' +
+    (isDone ? ' status-present' : ' status-absent') +
+    (!s.adesione ? ' no-ade' : '');
+  card.dataset.id = s.id;
+  card.dataset.class = cn;
+
+  const initials = (s.cognome[0] || '') + (s.nome[0] || '');
+  const phaseDots = getPhaseNames().map((_, i) => {
+    const done = !!s.phases[i];
+    const isAct = i === state.activePhase;
+    return `<div class="phase-dot ${done ? 'done' : ''} ${isAct ? 'active-phase' : ''}"></div>`;
+  }).join('');
+
+  // meta: orario ultimo check
+  const lastCheckPhase = [...s.phases].reverse().find(p => p);
+  const lastMeta = lastCheckPhase
+    ? `✓ ${formatTime(lastCheckPhase.ts)}`
+    : (s.adesione ? '—' : 'Non aderisce');
+
+  card.innerHTML = `
+    <div class="student-avatar">${initials.toUpperCase()}</div>
+    <div class="student-info">
+      <div class="student-name">${s.cognome} <span class="nome">${s.nome}</span></div>
+      <div class="student-meta">${lastMeta}</div>
+    </div>
+    <div class="phase-dots">${phaseDots}</div>
+  `;
+
+  // tap = segna presente
+  let pressTimer;
+  let isLongPress = false;
+
+  card.addEventListener('pointerdown', () => {
+    isLongPress = false;
+    pressTimer = setTimeout(() => {
+      isLongPress = true;
+      openDetail(s.id, cn);
+      navigator.vibrate && navigator.vibrate(30);
+    }, 500);
+  });
+
+  card.addEventListener('pointerup', () => {
+    clearTimeout(pressTimer);
+    if (!isLongPress) toggleStudentPhase(s.id, cn);
+  });
+
+  card.addEventListener('pointerleave', () => { clearTimeout(pressTimer); });
+
+  return card;
+}
+
+/* ============================================================
+   FILTRO RICERCA
+   ============================================================ */
+function filterStudents(cn, query) {
+  const list = document.getElementById(`list-${cn}`);
+  if (!list) return;
+  const q = query.toLowerCase();
+  list.querySelectorAll('.student-card').forEach(card => {
+    const name = card.querySelector('.student-name')?.textContent.toLowerCase() || '';
+    card.style.display = name.includes(q) ? '' : 'none';
+  });
+}
+
+/* ============================================================
+   TOGGLE FASE STUDENTE (tap)
+   ============================================================ */
+async function toggleStudentPhase(id, cn) {
+  const students = state.classes[cn];
+  const s = students.find(st => st.id === id);
+  if (!s) return;
+
+  // se non aderisce, non si può spuntare
+  if (!s.adesione) { showToast('Studente non aderisce alla gita'); return; }
+
+  const phase = state.activePhase;
+
+  if (s.phases[phase]) {
+    // deseleziona
+    s.phases[phase] = null;
+    showToast(`${s.cognome} ${s.nome} rimosso dalla fase`);
+  } else {
+    // segna presente + geolocalizzazione in background
+    const check = { ts: Date.now(), lat: null, lng: null };
+    try {
+      // qui chiedo la geo in background senza bloccare l'UI
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            check.lat = pos.coords.latitude;
+            check.lng = pos.coords.longitude;
+            s.phases[phase] = check;
+            saveState();
+          },
+          () => { s.phases[phase] = check; saveState(); },
+          { timeout: 5000, maximumAge: 30000 }
+        );
+      }
+    } catch(e) {}
+    s.phases[phase] = check;
+    showToast(`✓ ${s.cognome} ${s.nome}`);
+  }
+
+  saveState();
+  // aggiorno solo la card interessata per performance
+  refreshCard(id, cn);
+  updateGlobalCounter();
+  renderTabs();
+}
+
+function refreshCard(id, cn) {
+  const students = state.classes[cn];
+  const s = students.find(st => st.id === id);
+  if (!s) return;
+  const list = document.getElementById(`list-${cn}`);
+  if (!list) return;
+  const oldCard = list.querySelector(`[data-id="${id}"]`);
+  if (!oldCard) return;
+  const newCard = buildStudentCard(s, cn);
+  oldCard.replaceWith(newCard);
+  // aggiorno stats
+  const view = document.querySelector(`.class-view[data-class="${cn}"]`);
+  if (view) {
+    const phase = state.activePhase;
+    const sorted = students.filter(s => true);
+    const adherent = sorted.filter(s => s.adesione);
+    const present = adherent.filter(s => s.phases[phase]);
+    const absent = adherent.length - present.length;
+    const statsEl = view.querySelector('.class-stats');
+    if (statsEl) statsEl.innerHTML = `
+      <span class="stat-chip total">Tot: ${sorted.length}</span>
+      <span class="stat-chip total">Aderenti: ${adherent.length}</span>
+      <span class="stat-chip present">✓ ${present.length}</span>
+      <span class="stat-chip absent">✗ ${absent}</span>
+    `;
+  }
+}
+
+/* ============================================================
+   SCHERMATA SETUP
+   ============================================================ */
+let setupClasses = {}; // classi aggiunte durante il setup
+
+function updateSetupClassList() {
+  const el = document.getElementById('setup-classes-list');
+  el.innerHTML = '';
+  Object.keys(setupClasses).forEach(cn => {
+    const chip = document.createElement('span');
+    chip.className = 'setup-class-chip';
+    chip.innerHTML = `${cn} (${setupClasses[cn].length}) <button onclick="removeSetupClass('${cn}')">✕</button>`;
+    el.appendChild(chip);
+  });
+  document.getElementById('btn-start-trip').disabled = Object.keys(setupClasses).length === 0;
+  document.getElementById('btn-start-trip').style.opacity = Object.keys(setupClasses).length === 0 ? '.5' : '1';
+}
+
+function removeSetupClass(cn) {
+  delete setupClasses[cn];
+  updateSetupClassList();
+}
+
+function startTrip() {
+  const name = document.getElementById('setup-trip-name').value.trim() || 'Appello Gita';
+  const customPhase = document.getElementById('setup-custom-phase').value.trim() || 'Fase personalizzata';
+
+  state.tripName = name;
+  state.customPhaseName = customPhase;
+  state.classes = { ...setupClasses };
+  state.activeClass = Object.keys(state.classes).sort()[0];
+  state.activePhase = 0;
+
+  saveState();
+  document.getElementById('setup-screen').style.display = 'none';
+  renderAll();
+}
+
+/* ============================================================
+   SCANNER QR
+   ============================================================ */
+let qrStream = null;
+let qrAnimFrame = null;
+let qrFromSetup = false;
+
+function openQrScanner(fromSetup = false) {
+  qrFromSetup = fromSetup;
+  document.getElementById('qr-modal').classList.add('open');
+  document.getElementById('qr-status').textContent = 'Inquadra il QR code con la lista studenti';
+  startCamera();
+}
+
+function closeQrScanner() {
+  document.getElementById('qr-modal').classList.remove('open');
+  stopCamera();
+}
+
+async function startCamera() {
+  try {
+    qrStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    const video = document.getElementById('qr-video');
+    video.srcObject = qrStream;
+    await video.play();
+    scanQrLoop();
+  } catch(e) {
+    document.getElementById('qr-status').textContent = '⚠️ Fotocamera non disponibile. Usa "Carica immagine QR".';
+  }
+}
+
+function stopCamera() {
+  if (qrAnimFrame) { cancelAnimationFrame(qrAnimFrame); qrAnimFrame = null; }
+  if (qrStream) { qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
+  const video = document.getElementById('qr-video');
+  video.srcObject = null;
+}
+
+function scanQrLoop() {
+  const video = document.getElementById('qr-video');
+  const canvas = document.getElementById('qr-canvas');
+  const ctx = canvas.getContext('2d');
+
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'dontInvert' });
+    if (code) {
+      processQrData(code.data);
+      return;
+    }
+  }
+  qrAnimFrame = requestAnimationFrame(scanQrLoop);
+}
+
+function handleQrFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.getElementById('qr-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imgData.data, imgData.width, imgData.height);
+      if (code) processQrData(code.data);
+      else { document.getElementById('qr-status').textContent = '⚠️ QR non riconosciuto. Riprova.'; }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function processQrData(raw) {
+  stopCamera();
+  try {
+    const data = JSON.parse(raw);
+    if (!data.classe || !Array.isArray(data.studenti)) throw new Error('formato non valido');
+
+    const cn = data.classe.trim();
+    const students = data.studenti.map(st => createStudent(st.cognome, st.nome, st.adesione !== false));
+
+    if (qrFromSetup) {
+      setupClasses[cn] = students;
+      updateSetupClassList();
+      document.getElementById('qr-status').textContent = `✅ Classe ${cn} importata (${students.length} studenti)`;
+      showToast(`✅ Classe ${cn} importata`);
+      setTimeout(closeQrScanner, 1500);
+    } else {
+      // aggiunta a gita già avviata
+      if (state.classes[cn]) {
+        // merge: aggiungo solo studenti non già presenti
+        const existing = state.classes[cn];
+        let added = 0;
+        students.forEach(ns => {
+          const dup = existing.find(e => e.cognome === ns.cognome && e.nome === ns.nome);
+          if (!dup) { existing.push(ns); added++; }
+        });
+        showToast(`Classe ${cn}: ${added} nuovi studenti aggiunti`);
+      } else {
+        state.classes[cn] = students;
+        showToast(`✅ Classe ${cn} importata`);
+      }
+      saveState();
+      renderAll();
+      closeQrScanner();
+    }
+  } catch(e) {
+    document.getElementById('qr-status').textContent = '⚠️ QR non valido. Formato atteso: {classe, studenti}';
+    showToast('⚠️ QR non valido');
+    // riprendo la camera dopo 2s
+    setTimeout(() => { if (document.getElementById('qr-modal').classList.contains('open')) startCamera(); }, 2000);
+  }
+}
+
+/* ============================================================
+   AGGIUNTA CLASSE MANUALE
+   ============================================================ */
+let addClassFromSetup = false;
+
+function openAddClassManual(fromSetup = false) {
+  console.log('openAddClassManual chiamata', fromSetup);
+  addClassFromSetup = fromSetup;
+  document.getElementById('new-class-name').value = '';
+  const modal = document.getElementById('add-class-modal');
+  modal.style.cssText = 'display:flex; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:600; align-items:flex-end;';
+  setTimeout(() => document.getElementById('new-class-name').focus(), 100);
+}
+
+function closeAddClassModal() {
+  document.getElementById('add-class-modal').style.display = 'none';
+}
+
+document.getElementById('add-class-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('add-class-modal')) closeAddClassModal();
+});
+
+function confirmAddClass() {
+  const cn = document.getElementById('new-class-name').value.trim().toUpperCase();
+  if (!cn) { showToast('⚠️ Inserisci il nome della classe'); return; }
+
+  if (addClassFromSetup) {
+    if (!setupClasses[cn]) setupClasses[cn] = [];
+    updateSetupClassList();
+    showToast(`Classe ${cn} aggiunta`);
+  } else {
+    if (!state.classes[cn]) state.classes[cn] = [];
+    if (!state.activeClass) state.activeClass = cn;
+    saveState();
+    renderAll();
+    switchClass(cn);
+    showToast(`Classe ${cn} aggiunta`);
+  }
+  closeAddClassModal();
+}
+
+/* ============================================================
+   AGGIUNTA STUDENTE (FAB)
+   ============================================================ */
+document.getElementById('fab').addEventListener('click', openAddStudent);
+
+function openAddStudent() {
+  if (!state.activeClass) { showToast('Seleziona prima una classe'); return; }
+  document.getElementById('add-cognome').value = '';
+  document.getElementById('add-nome').value = '';
+  document.getElementById('add-ade-toggle').classList.add('on');
+  document.getElementById('add-student-modal').classList.add('open');
+  setTimeout(() => document.getElementById('add-cognome').focus(), 100);
+}
+
+function closeAddStudent() {
+  document.getElementById('add-student-modal').classList.remove('open');
+}
+
+function confirmAddStudent() {
+  const cognome = document.getElementById('add-cognome').value.trim();
+  const nome = document.getElementById('add-nome').value.trim();
+  const adesione = document.getElementById('add-ade-toggle').classList.contains('on');
+
+  if (!cognome || !nome) { showToast('⚠️ Inserisci nome e cognome'); return; }
+
+  const s = createStudent(cognome, nome, adesione);
+  state.classes[state.activeClass].push(s);
+  saveState();
+  closeAddStudent();
+  renderCurrentClass();
+  renderTabs();
+  updateGlobalCounter();
+  showToast(`${cognome} ${nome} aggiunto`);
+}
+
+function createStudent(cognome, nome, adesione = true) {
+  return {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    cognome: (cognome || '').trim(),
+    nome: (nome || '').trim(),
+    adesione: !!adesione,
+    phases: [null, null, null, null], // 4 fasi
+    notes: ''
+  };
+}
+
+/* ============================================================
+   DETTAGLIO STUDENTE (tap lungo)
+   ============================================================ */
+let detailStudentId = null;
+let detailClassName = null;
+
+function openDetail(id, cn) {
+  const students = state.classes[cn];
+  const s = students.find(st => st.id === id);
+  if (!s) return;
+
+  detailStudentId = id;
+  detailClassName = cn;
+
+  document.getElementById('detail-avatar').textContent = ((s.cognome[0] || '') + (s.nome[0] || '')).toUpperCase();
+  document.getElementById('detail-fullname').textContent = `${s.cognome} ${s.nome}`;
+  document.getElementById('detail-class-label').textContent = `Classe ${cn}`;
+  document.getElementById('detail-notes').value = s.notes || '';
+
+  // toggle adesione
+  const tog = document.getElementById('detail-ade-toggle');
+  tog.classList.toggle('on', s.adesione);
+
+  // fasi
+  const phasesList = document.getElementById('detail-phases-list');
+  phasesList.innerHTML = '';
+  getPhaseNames().forEach((name, i) => {
+    const check = s.phases[i];
+    const row = document.createElement('div');
+    row.className = 'phase-row';
+    const time = check ? `${formatTime(check.ts)}${check.lat ? ` · ${check.lat.toFixed(4)}, ${check.lng.toFixed(4)}` : ''}` : '—';
+    row.innerHTML = `
+      <div class="phase-status-dot ${check ? 'done' : ''}"></div>
+      <div class="phase-row-name">${name}</div>
+      <div class="phase-row-time">${time}</div>
+    `;
+    phasesList.appendChild(row);
+  });
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detail-modal').classList.remove('open');
+  detailStudentId = null;
+  detailClassName = null;
+}
+
+function handleDetailOverlayClick(e) {
+  if (e.target === document.getElementById('detail-modal')) closeDetail();
+}
+
+function toggleDetailAde() {
+  const tog = document.getElementById('detail-ade-toggle');
+  tog.classList.toggle('on');
+}
+
+function saveDetailNotes() {
+  if (!detailStudentId || !detailClassName) return;
+  const s = state.classes[detailClassName].find(st => st.id === detailStudentId);
+  if (!s) return;
+
+  s.notes = document.getElementById('detail-notes').value;
+  s.adesione = document.getElementById('detail-ade-toggle').classList.contains('on');
+  saveState();
+  refreshCard(detailStudentId, detailClassName);
+  renderTabs();
+  closeDetail();
+  showToast('Salvato');
+}
+
+function deleteStudentFromDetail() {
+  if (!detailStudentId || !detailClassName) return;
+  if (!confirm('Rimuovere questo studente?')) return;
+  state.classes[detailClassName] = state.classes[detailClassName].filter(s => s.id !== detailStudentId);
+  saveState();
+  closeDetail();
+  renderCurrentClass();
+  renderTabs();
+  updateGlobalCounter();
+  showToast('Studente rimosso');
+}
+
+/* ============================================================
+   MENU LATERALE
+   ============================================================ */
+document.getElementById('btn-menu').addEventListener('click', openMenu);
+
+function openMenu() {
+  document.getElementById('menu-overlay').classList.add('open');
+  document.getElementById('side-menu').classList.add('open');
+}
+
+function closeMenu() {
+  document.getElementById('menu-overlay').classList.remove('open');
+  document.getElementById('side-menu').classList.remove('open');
+}
+
+/* ============================================================
+   EDIT NOME GITA
+   ============================================================ */
+function openEditTrip() {
+  document.getElementById('edit-trip-input').value = state.tripName;
+  document.getElementById('edit-trip-modal').classList.add('open');
+  setTimeout(() => document.getElementById('edit-trip-input').focus(), 100);
+}
+
+function closeEditTrip() {
+  document.getElementById('edit-trip-modal').classList.remove('open');
+}
+
+function saveEditTrip() {
+  const val = document.getElementById('edit-trip-input').value.trim();
+  if (!val) return;
+  state.tripName = val;
+  saveState();
+  renderHeader();
+  closeEditTrip();
+  showToast('Nome aggiornato');
+}
+
+/* ============================================================
+   FASE CUSTOM
+   ============================================================ */
+function openCustomPhaseEdit() {
+  document.getElementById('custom-phase-input').value = state.customPhaseName;
+  document.getElementById('custom-phase-modal').classList.add('open');
+  setTimeout(() => document.getElementById('custom-phase-input').focus(), 100);
+}
+
+function closeCustomPhaseEdit() {
+  document.getElementById('custom-phase-modal').classList.remove('open');
+}
+
+function saveCustomPhase() {
+  const val = document.getElementById('custom-phase-input').value.trim();
+  if (!val) return;
+  state.customPhaseName = val;
+  saveState();
+  renderPhaseSelector();
+  renderCurrentClass();
+  closeCustomPhaseEdit();
+  showToast('Fase rinominata');
+}
+
+/* ============================================================
+   RESET
+   ============================================================ */
+function confirmReset() {
+  if (!confirm('Sei sicuro? Tutti i dati saranno cancellati. Questa azione è irreversibile.')) return;
+  localStorage.removeItem(STATE_KEY);
+  location.reload();
+}
+
+/* ============================================================
+   EXPORT PDF
+   ============================================================ */
+function exportPDF() {
+  if (!window.jspdf) { showToast('⏳ Caricamento jsPDF...'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const margin = 14;
+  let y = margin;
+  const pageH = 297;
+  const lineH = 7;
+
+  function checkPage(needed = lineH * 2) {
+    if (y + needed > pageH - margin) { doc.addPage(); y = margin; }
+  }
+
+  // titolo
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text(state.tripName, margin, y);
+  y += 8;
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100);
+  doc.text(`Generato il ${formatDate(Date.now())}`, margin, y);
+  y += 12;
+
+  // per ogni classe
+  const phases = getPhaseNames();
+
+  Object.keys(state.classes).sort().forEach(cn => {
+    const students = [...state.classes[cn]].sort((a, b) => a.cognome.localeCompare(b.cognome));
+    const adherent = students.filter(s => s.adesione);
+
+    checkPage(20);
+
+    // intestazione classe
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 53, 128);
+    doc.text(`Classe ${cn}`, margin, y);
+    y += 6;
+
+    // riepilogo numerico per fase
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80);
+    const summary = phases.map((ph, i) => {
+      const cnt = adherent.filter(s => s.phases[i]).length;
+      return `${ph}: ${cnt}/${adherent.length}`;
+    }).join('   |   ');
+    doc.text(summary, margin, y);
+    y += 8;
+
+// aggiungo logo in alto a destra nel PDF
+const logo = document.getElementById('header-icon');
+if (logo && logo.tagName === 'IMG') {
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = logo.naturalWidth;
+    canvas.height = logo.naturalHeight;
+    ctx.drawImage(logo, 0, 0);
+    const imgData = canvas.toDataURL('image/png');
+    const logoH = 15; // altezza in mm nel PDF
+    const logoW = (logo.naturalWidth / logo.naturalHeight) * logoH;
+    doc.addImage(imgData, 'PNG', 196 - logoW, margin - 5, logoW, logoH);
+  } catch(e) { console.warn('logo non aggiunto al PDF', e); }
+}
+
+    // intestazione tabella
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(60);
+    const cols = [margin, 62, 82, 102, 122, 142];
+    const headers = ['Studente', ...phases];
+    headers.forEach((h, i) => doc.text(h, cols[i] || (cols[cols.length-1] + (i - cols.length + 1) * 20), y));
+    y += 4;
+    doc.setDrawColor(200);
+    doc.line(margin, y, 196, y);
+    y += 3;
+
+    // righe studenti
+    doc.setFont('helvetica', 'normal');
+    students.forEach(s => {
+      checkPage(lineH);
+      const nameStr = `${s.cognome} ${s.nome}${s.adesione ? '' : ' ✗'}`;
+      doc.setFontSize(8);
+      doc.setTextColor(s.adesione ? 30 : 150);
+      doc.text(nameStr.substring(0, 28), margin, y);
+
+      phases.forEach((_, i) => {
+        const check = s.phases[i];
+        doc.setTextColor(check ? 27 : (s.adesione ? 189 : 180));
+        const marker = check ? `✓ ${formatTime(check.ts)}` : (s.adesione ? '—' : '');
+        doc.text(marker, cols[i + 1] || (cols[cols.length-1] + i * 20), y);
+      });
+
+      if (s.notes) {
+        y += 4;
+        doc.setFontSize(7);
+        doc.setTextColor(120);
+        doc.text(`  Note: ${s.notes.substring(0, 80)}`, margin, y);
+      }
+
+      y += lineH;
+    });
+
+    y += 6;
+  });
+
+  doc.save(`appello_${state.tripName.replace(/\s+/g, '_')}_${formatDate(Date.now(), true)}.pdf`);
+  showToast('📄 PDF esportato');
+}
+
+/* ============================================================
+   UTILITÀ
+   ============================================================ */
+function formatTime(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDate(ts, compact = false) {
+  const d = new Date(ts);
+  if (compact) return d.toISOString().slice(0, 10);
+  return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+let toastTimeout;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+/* ============================================================
+   PWA — SERVICE WORKER
+   ============================================================ */
+function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  // registro inline come blob per evitare file esterni
+  const swCode = `
+    const CACHE = 'appello-gita-v1';
+    const ASSETS = [self.location.href.replace('/sw-blob.js', '') || '/'];
+
+    self.addEventListener('install', e => {
+      e.waitUntil(
+        caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
+      );
+    });
+
+    self.addEventListener('activate', e => {
+      e.waitUntil(
+        caches.keys().then(keys =>
+          Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+        ).then(() => self.clients.claim())
+      );
+    });
+
+    self.addEventListener('fetch', e => {
+      if (e.request.method !== 'GET') return;
+      e.respondWith(
+        caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
+          const clone = resp.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+          return resp;
+        }).catch(() => cached))
+      );
+    });
+  `;
+
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const url = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).catch(e => console.warn('SW non registrato:', e));
+}
+
+/* ============================================================
+   MANIFEST PWA (iniettato dinamicamente)
+   ============================================================ */
+(function injectManifest() {
+  const manifest = {
+    name: 'Appello Gita Scolastica',
+    short_name: 'Appello Gita',
+    description: 'Gestione presenze gita scolastica in montagna',
+    start_url: '.',
+    display: 'standalone',
+    orientation: 'portrait',
+    background_color: '#FFFFFF',
+    theme_color: '#BD2A00',
+    icons: [
+      {
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%23BD2A00'/%3E%3Ctext x='50%25' y='58%25' font-size='300' text-anchor='middle' dominant-baseline='middle'%3E🏔️%3C/text%3E%3C/svg%3E",
+        sizes: '512x512',
+        type: 'image/svg+xml',
+        purpose: 'any maskable'
+      }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = url;
+  document.head.appendChild(link);
+})();
+</script>
+</body>
+</html>
