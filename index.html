@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="Appello uscita didattica">
 <title>Appello uscita didattica</title>
 
+<script src="jsQR.min.js"></script>
 <!-- jsPDF via CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -1780,20 +1781,15 @@ function openQrScanner(fromSetup = false) {
   });
 }
 
-// carica jsQR solo se non è già caricato
 function loadJsQR() {
   return new Promise((resolve, reject) => {
-    // se è già disponibile, non ricaricare
-    if (typeof jsQR === 'function') { resolve(); return; }
-
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
-    script.onload = resolve;
-    script.onerror = () => {
-      document.getElementById('qr-status').textContent = '⚠️ Impossibile caricare lo scanner. Controlla la connessione.';
-      reject(new Error('jsQR non caricato'));
-    };
-    document.head.appendChild(script);
+    if (typeof jsQR === 'function') {
+      resolve();
+    } else {
+      // jsQR non trovato: probabilmente il file locale manca
+      document.getElementById('qr-status').textContent = '⚠️ Scanner QR non disponibile.';
+      reject(new Error('jsQR non trovato'));
+    }
   });
 }
 
