@@ -1004,6 +1004,32 @@ body {
   background: #1B5E20;
 }
 
+.custom-phase-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.custom-phase-item:last-child { border-bottom: none; }
+.custom-phase-item span {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+}
+.btn-remove-phase {
+  background: none;
+  border: 1.5px solid var(--primary-brand);
+  color: var(--primary-brand);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+.btn-remove-phase:active { background: #FDEAE6; }
+
 </style>
 </head>
 
@@ -1151,7 +1177,7 @@ body {
       <span class="icon"></span> Note generali uscita
     </button>
     <button class="menu-item" onclick="openCustomPhaseEdit(); closeMenu()">
-      <span class="icon"></span> Rinomina fase custom
+      <span class="icon"></span> Gestisci fasi custom
     </button>
     <button class="menu-item" onclick="openCamera(); closeMenu()">
       <span class="icon"></span> Fotocamera QR
@@ -1277,17 +1303,30 @@ body {
 </div>
 
 <!-- ============================================================
-     MODAL FASE CUSTOM
+     MODAL GESTIONE FASI CUSTOM
      ============================================================ -->
 <div id="custom-phase-modal" onclick="if(event.target===this)closeCustomPhaseEdit()">
   <div id="custom-phase-sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">
-      Rinomina fase personalizzata
+      Fasi personalizzate
       <button onclick="closeCustomPhaseEdit()">✕</button>
     </div>
-    <input class="input-field" id="custom-phase-input" placeholder="Nome fase" maxlength="40">
-    <button class="btn-primary" onclick="saveCustomPhase()">💾 Salva</button>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">
+      Fasi fisse: Partenza · Biglietto treno · Ritorno
+    </p>
+    <div id="custom-phases-list"></div>
+    <div id="custom-phase-add-area">
+      <input class="input-field" id="custom-phase-input"
+             placeholder="Nome nuova fase (es. Visita museo)" maxlength="40">
+      <button class="btn-primary" id="btn-add-phase" onclick="addCustomPhase()">
+        Aggiungi fase
+      </button>
+    </div>
+    <p id="custom-phase-limit-msg" style="display:none;font-size:12px;
+       color:var(--text-muted);text-align:center;margin-top:8px;">
+      Massimo 3 fasi personalizzate raggiunto
+    </p>
   </div>
 </div>
 
@@ -1319,21 +1358,18 @@ const STATE_KEY = 'appello_gita_v1';
 
 let state = {
   tripName: 'Appello uscita didattica',
-  customPhaseName: 'Fase personalizzata',
+  customPhases: [],   // array di nomi fasi custom, max 3
   tripNotes: '',
-  activeClass: null,    // nome classe attiva
-  activePhase: 0,       // indice fase attiva (0-3)
-  classes: {},          // { "3A": [ { id, cognome, nome, adesione, phases: [{ts, lat, lng}|null], notes } ] }
+  activeClass: null,
+  activePhase: 0,
+  classes: {},
 };
 
-// le fasi fisse (0-3) + 1 custom
-const PHASE_NAMES_BASE = ['Adesione', 'Partenza', 'Biglietto treno', 'Ritorno'];
+//3 fasi fisse e possibilità di aggiungere fasi custom
+const PHASE_NAMES_BASE = ['Partenza', 'Biglietto treno', 'Ritorno'];
 function getPhaseNames() {
-  return [...PHASE_NAMES_BASE.slice(1), state.customPhaseName];
-  // indici reali: 0=Partenza, 1=Biglietto, 2=Ritorno, 3=Custom
-  // l'adesione è un campo separato, non una "fase di check"
+  return [...PHASE_NAMES_BASE, ...state.customPhases];
 }
-// le fasi di check sono 4 (0..3), l'adesione è gestita a parte
 
 /* ============================================================
    PERSISTENZA
@@ -1346,7 +1382,17 @@ function saveState() {
 function loadState() {
   try {
     const raw = localStorage.getItem(STATE_KEY);
-    if (raw) state = { ...state, ...JSON.parse(raw) };
+    if (raw) {
+      const saved = JSON.parse(raw);
+      state = { ...state, ...saved };
+      // migrazione: vecchio customPhaseName → nuovo customPhases
+      if (saved.customPhaseName && !saved.customPhases) {
+        state.customPhases = [saved.customPhaseName];
+        delete state.customPhaseName;
+      }
+      // garanzia: customPhases è sempre un array
+      if (!Array.isArray(state.customPhases)) state.customPhases = [];
+    }
   } catch(e) { console.warn('errore caricamento stato', e); }
 }
 
@@ -1730,7 +1776,7 @@ function startTrip() {
   const desc = document.getElementById('setup-trip-desc').value.trim();
 
   state.tripName = name;
-  state.customPhaseName = 'Fase personalizzata'; // valore fisso, rinominabile dopo
+  state.customPhases = [];
   if (desc) state.tripNotes = desc; // salva la descrizione come note generali
   state.classes = { ...setupClasses };
   state.activeClass = Object.keys(state.classes).sort()[0];
@@ -2013,7 +2059,7 @@ function createStudent(cognome, nome, adesione = true) {
     cognome: (cognome || '').trim().toUpperCase(),
     nome: toTitleCase(nome || ''),
     adesione: !!adesione,
-    phases: [null, null, null, null],
+    phases: new Array(getPhaseNames().length).fill(null),
     notes: ''
   };
 }
@@ -2187,24 +2233,88 @@ function saveEditTrip() {
    FASE CUSTOM
    ============================================================ */
 function openCustomPhaseEdit() {
-  document.getElementById('custom-phase-input').value = state.customPhaseName;
+  renderCustomPhaseList();
+  document.getElementById('custom-phase-input').value = '';
   document.getElementById('custom-phase-modal').classList.add('open');
-  setTimeout(() => document.getElementById('custom-phase-input').focus(), 100);
 }
 
 function closeCustomPhaseEdit() {
   document.getElementById('custom-phase-modal').classList.remove('open');
 }
 
-function saveCustomPhase() {
+function renderCustomPhaseList() {
+  const list = document.getElementById('custom-phases-list');
+  const addArea = document.getElementById('custom-phase-add-area');
+  const limitMsg = document.getElementById('custom-phase-limit-msg');
+  list.innerHTML = '';
+
+  if (state.customPhases.length === 0) {
+    list.innerHTML = '<p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Nessuna fase personalizzata.</p>';
+  } else {
+    state.customPhases.forEach((name, i) => {
+      const item = document.createElement('div');
+      item.className = 'custom-phase-item';
+      item.innerHTML = `
+        <span>${name}</span>
+        <button class="btn-remove-phase" onclick="removeCustomPhase(${i})">Elimina</button>
+      `;
+      list.appendChild(item);
+    });
+  }
+
+  // mostra/nasconde il form di aggiunta in base al limite
+  const atLimit = state.customPhases.length >= 3;
+  addArea.style.display = atLimit ? 'none' : '';
+  limitMsg.style.display = atLimit ? 'block' : 'none';
+}
+
+function addCustomPhase() {
   const val = document.getElementById('custom-phase-input').value.trim();
-  if (!val) return;
-  state.customPhaseName = val;
+  if (!val) { showToast('⚠️ Inserisci il nome della fase'); return; }
+  if (state.customPhases.length >= 3) { showToast('⚠️ Massimo 3 fasi'); return; }
+
+  state.customPhases.push(val);
+
+  // aggiungo uno slot null a tutti gli studenti esistenti
+  Object.values(state.classes).forEach(students => {
+    students.forEach(s => s.phases.push(null));
+  });
+
   saveState();
+  renderCustomPhaseList();
   renderPhaseSelector();
   renderCurrentClass();
-  closeCustomPhaseEdit();
-  showToast('Fase rinominata');
+  document.getElementById('custom-phase-input').value = '';
+  showToast(`Fase "${val}" aggiunta`);
+}
+
+function removeCustomPhase(idx) {
+  const name = state.customPhases[idx];
+  if (!confirm(`Eliminare la fase "${name}"? I dati di presenza registrati andranno persi.`)) return;
+
+  // indice reale nell'array phases degli studenti
+  // le fasi fisse sono 3 (indici 0,1,2), le custom partono dall'indice 3
+  const phaseIdx = PHASE_NAMES_BASE.length + idx;
+
+  // rimuovo lo slot da tutti gli studenti
+  Object.values(state.classes).forEach(students => {
+    students.forEach(s => s.phases.splice(phaseIdx, 1));
+  });
+
+  state.customPhases.splice(idx, 1);
+
+  // se la fase attiva era quella eliminata o oltre, torno alla prima
+  if (state.activePhase >= getPhaseNames().length) {
+    state.activePhase = 0;
+  }
+
+  saveState();
+  renderCustomPhaseList();
+  renderPhaseSelector();
+  renderCurrentClass();
+  updateGlobalCounter();
+  renderTabs();
+  showToast(`Fase "${name}" eliminata`);
 }
 
 /* ============================================================
