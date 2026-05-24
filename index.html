@@ -2328,17 +2328,14 @@ function exportPDF() {
         }
       });
 
-      // note studente
+      // note studente — sulla stessa riga del nome, subito sotto
       if (s.notes) {
-        y += rowH - 1;
-        doc.setFontSize(6.5);
+        doc.setFontSize(6);
         doc.setFont('helvetica', 'italic');
-        doc.setTextColor(100);
-        doc.text(`  ↳ ${s.notes.substring(0, 90)}`, colName, y);
-        y += 4;
-      } else {
-        y += rowH;
+        doc.setTextColor(120);
+        doc.text(`↳ ${s.notes.substring(0, 60)}`, colName, y + 3);
       }
+      y += rowH;
     });
 
     y += 4;
