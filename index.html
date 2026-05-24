@@ -1809,11 +1809,19 @@ function handleQrFile(event) {
     img.onload = () => {
       const canvas = document.getElementById('qr-canvas');
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
+
+      // ridimensiono a max 1024px mantenendo le proporzioni
+      // jsQR lavora meglio su immagini non troppo grandi
+      const MAX = 1024;
+      const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imgData.data, imgData.width, imgData.height);
+      const code = jsQR(imgData.data, imgData.width, imgData.height, {
+        inversionAttempts: 'attemptBoth'  // prova anche QR invertiti (bianco su nero)
+      });
       if (code) processImportData(code.data);
       else showToast('⚠️ QR non riconosciuto nella foto');
     };
