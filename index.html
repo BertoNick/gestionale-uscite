@@ -1069,8 +1069,12 @@ body {
 
   <div class="setup-card" style="max-width:400px;width:100%">
     <h3>Descrizione uscita</h3>
-    <input class="input-field" id="setup-trip-name" placeholder="es. Milano - MUDEC" maxlength="50">
-    <input class="input-field" id="setup-custom-phase" placeholder="Fase personalizzata" maxlength="40">
+    <input class="input-field" id="setup-trip-name" 
+           placeholder="Nome uscita *  (es. Milano - MUDEC)" maxlength="50">
+    <textarea class="input-field" id="setup-trip-desc"
+           placeholder="Descrizione attività (opzionale — saved nelle note generali)"
+           maxlength="300" rows="3"
+           style="resize:none;min-height:80px;"></textarea>
   </div>
 
   <div class="setup-card" style="max-width:400px;width:100%">
@@ -1713,11 +1717,18 @@ function removeSetupClass(cn) {
 }
 
 function startTrip() {
-  const name = document.getElementById('setup-trip-name').value.trim() || 'Appello uscita didattica';
-  const customPhase = document.getElementById('setup-custom-phase').value.trim() || 'Fase personalizzata';
+  const name = document.getElementById('setup-trip-name').value.trim();
+  if (!name) {
+    document.getElementById('setup-trip-name').focus();
+    showToast('⚠️ Inserisci il nome dell\'uscita');
+    return;
+  }
+
+  const desc = document.getElementById('setup-trip-desc').value.trim();
 
   state.tripName = name;
-  state.customPhaseName = customPhase;
+  state.customPhaseName = 'Fase personalizzata'; // valore fisso, rinominabile dopo
+  if (desc) state.tripNotes = desc; // salva la descrizione come note generali
   state.classes = { ...setupClasses };
   state.activeClass = Object.keys(state.classes).sort()[0];
   state.activePhase = 0;
@@ -2190,7 +2201,19 @@ if (logo && logo.tagName === 'IMG') {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100);
   doc.text(`Generato il ${formatDate(Date.now())}`, margin, y);
-  y += 12;
+  y += 7;
+
+  // note generali uscita (se presenti)
+  if (state.tripNotes) {
+    doc.setFontSize(9);
+    doc.setTextColor(60);
+    // splitTextToSize spezza il testo su più righe se è troppo lungo
+    const noteLines = doc.splitTextToSize(`Note: ${state.tripNotes}`, 182);
+    doc.text(noteLines, margin, y);
+    y += noteLines.length * 5 + 4;
+  }
+
+  y += 5;
 
   // per ogni classe
   const phases = getPhaseNames();
