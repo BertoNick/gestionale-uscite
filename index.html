@@ -1077,7 +1077,7 @@ body {
     </div>
     <div id="header-counter">
       <span class="num" id="counter-present">0</span>
-      <span class="lbl">vistati totali (fase)</span>
+      <span class="lbl">vistati totali</span>
     </div>
     <button id="btn-menu" title="Menu">☰</button>
   </header>
@@ -1608,7 +1608,7 @@ function buildStudentCard(s, cn) {
     <div class="phase-dots">${phaseDots}</div>
     <button class="btn-card-detail" data-id="${s.id}" data-class="${cn}" title="Dettagli">
       <span style="font-size:16px">📝</span>
-      <span style="font-size:10px;display:block;line-height:1;color:var(--text-muted);font-family:var(--font-sans);">note</span>
+      <span style="font-size:10px;display:block;line-height:1;color:var(--text-muted);font-family:var(--font-sans);">NOTE</span>
     </button>
   `;
 
@@ -2063,13 +2063,17 @@ function confirmAddStudent() {
   showToast(`${cognome} ${nome} aggiunto`);
 }
 
+function toTitleCase(str) {
+  return str.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function createStudent(cognome, nome, adesione = true) {
   return {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    cognome: (cognome || '').trim(),
-    nome: (nome || '').trim(),
+    cognome: (cognome || '').trim().toUpperCase(),
+    nome: toTitleCase(nome || ''),
     adesione: !!adesione,
-    phases: [null, null, null, null], // 4 fasi
+    phases: [null, null, null, null],
     notes: ''
   };
 }
