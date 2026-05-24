@@ -1052,6 +1052,14 @@ body {
   border-color: var(--accent-eu-gold);
   color: #fff;
 }
+
+#btn-start-trip {
+  background: #2E7D32;
+}
+#btn-start-trip:active {
+  background: #1B5E20;
+}
+
 </style>
 </head>
 
@@ -1126,7 +1134,7 @@ body {
 
   <div style="max-width:400px;width:100%;margin-top:8px">
     <button class="btn-primary" id="btn-start-trip" onclick="startTrip()" disabled style="opacity:.5">
-      ✅ Inizia l'uscita ✅
+      Inizia l'uscita
     </button>
     <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:12px">
       Aggiunta altre classi anche dopo l'avvio.
@@ -1191,7 +1199,7 @@ body {
       <span class="icon"></span> Modifica nome uscita
     </button>
     <button class="menu-item" onclick="openTripNotes(); closeMenu()">
-      <span class="icon">📋</span> Note generali uscita
+      <span class="icon"></span> Note generali uscita
     </button>
     <button class="menu-item" onclick="openCustomPhaseEdit(); closeMenu()">
       <span class="icon"></span> Rinomina fase custom
