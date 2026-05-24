@@ -394,6 +394,19 @@ body {
 .phase-dot.done { background: var(--color-present); border-color: var(--color-present); }
 .phase-dot.active-phase { box-shadow: 0 0 0 2px var(--accent-arctic); }
 
+.btn-card-detail {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity .15s;
+}
+.btn-card-detail:active { opacity: 1; background: var(--bg-alternate); }
+
 /* ============================================================
    SCHERMATA SETUP (primo avvio)
    ============================================================ */
@@ -1028,7 +1041,9 @@ body {
 
   <!-- HEADER GLOBALE -->
   <header id="global-header">
-    <img id="header-icon" src="icons/logo-manzoni.png" alt="Logo scuola" style="height:40px;width:auto;object-fit:contain;">
+    <div style="background:#fff; border-radius:8px; padding:4px 6px; display:flex; align-items:center; flex-shrink:0;">
+      <img id="header-icon" src="icons/logo-manzoni.png" alt="Logo scuola" style="height:36px;width:auto;object-fit:contain;display:block;">
+    </div>
     <div id="header-title-block">
       <div id="trip-name">Appello uscita didattica</div>
       <div id="trip-subtitle">Gestione presenze</div>
@@ -1131,6 +1146,9 @@ body {
     <h3>Uscita didattica</h3>
     <button class="menu-item" onclick="openEditTrip(); closeMenu()">
       <span class="icon"></span> Modifica nome uscita
+    </button>
+    <button class="menu-item" onclick="openTripNotes(); closeMenu()">
+      <span class="icon">📋</span> Note generali uscita
     </button>
     <button class="menu-item" onclick="openCustomPhaseEdit(); closeMenu()">
       <span class="icon"></span> Rinomina fase custom
@@ -1264,6 +1282,19 @@ body {
   </div>
 </div>
 
+<!-- NOTE GENERALI USCITA -->
+<div id="trip-notes-modal" onclick="if(event.target===this)closeTripNotes()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-end;">
+  <div style="width:100%;background:var(--bg-main);border-radius:20px 20px 0 0;padding:0 20px calc(24px + var(--bottom-safe));animation:slideUp .25s ease">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      📋 Note generali uscita
+      <button onclick="closeTripNotes()">✕</button>
+    </div>
+    <textarea class="notes-textarea" id="trip-notes-textarea" placeholder="Annotazioni generali sull'uscita..." style="min-height:140px"></textarea>
+    <button class="btn-primary" style="margin-top:10px" onclick="saveTripNotes()">💾 Salva note</button>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div id="toast"></div>
 
@@ -1280,6 +1311,7 @@ const STATE_KEY = 'appello_gita_v1';
 let state = {
   tripName: 'Appello uscita didattica',
   customPhaseName: 'Fase personalizzata',
+  tripNotes: '',
   activeClass: null,    // nome classe attiva
   activePhase: 0,       // indice fase attiva (0-3)
   classes: {},          // { "3A": [ { id, cognome, nome, adesione, phases: [{ts, lat, lng}|null], notes } ] }
@@ -1523,7 +1555,13 @@ function buildStudentCard(s, cn) {
       <div class="student-meta">${lastMeta}</div>
     </div>
     <div class="phase-dots">${phaseDots}</div>
+    <button class="btn-card-detail" data-id="${s.id}" data-class="${cn}" title="Dettagli">📝</button>
   `;
+
+  card.querySelector('.btn-card-detail').addEventListener('click', e => {
+    e.stopPropagation(); // impedisce che il tap arrivi anche alla card
+    openDetail(s.id, cn);
+  });
 
   // tap = segna presente
   let pressTimer;
@@ -1544,6 +1582,8 @@ function buildStudentCard(s, cn) {
   });
 
   card.addEventListener('pointerleave', () => { clearTimeout(pressTimer); });
+
+  card.addEventListener('contextmenu', e => e.preventDefault());
 
   return card;
 }
@@ -2189,6 +2229,24 @@ function showToast(msg) {
   el.classList.add('show');
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function openTripNotes() {
+  document.getElementById('trip-notes-textarea').value = state.tripNotes || '';
+  const modal = document.getElementById('trip-notes-modal');
+  modal.style.cssText = 'display:flex;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-end;';
+  setTimeout(() => document.getElementById('trip-notes-textarea').focus(), 100);
+}
+
+function closeTripNotes() {
+  document.getElementById('trip-notes-modal').style.display = 'none';
+}
+
+function saveTripNotes() {
+  state.tripNotes = document.getElementById('trip-notes-textarea').value;
+  saveState();
+  closeTripNotes();
+  showToast('Note salvate');
 }
 
 /* ============================================================
