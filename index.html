@@ -1871,12 +1871,22 @@ function importFromPaste() {
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"');
   try {
-    const data = JSON.parse(normalized);
-    if (!data.classe || !Array.isArray(data.studenti)) {
-      showToast('⚠️ Serve "classe" e "studenti" nel JSON'); return;
+    // supporto per più JSON separati da newline (una classe per riga)
+    const righe = normalized.split('\n').map(r => r.trim()).filter(r => r.length > 0);
+    let importati = 0;
+
+    righe.forEach(riga => {
+      const data = JSON.parse(riga);
+      if (!data.classe || !Array.isArray(data.studenti)) return;
+      processImportData(riga);
+      importati++;
+    });
+
+    if (importati > 0) {
+      closePasteJSON();
+    } else {
+      showToast('⚠️ Serve "classe" e "studenti" nel JSON');
     }
-    processImportData(normalized);
-    closePasteJSON();
   } catch(e) {
     showToast('⚠️ JSON non valido. Controlla virgolette e parentesi.');
     console.warn('JSON parse error:', e.message);
