@@ -2191,7 +2191,7 @@ function exportPDF() {
   const colNr   = margin;           // n° progressivo
   const colName = margin + 8;       // nome studente
   const colPhases = [90, 112, 134, 156]; // una colonna per fase
-  const lineH = 8;
+  const lineH = 6;
   let y = margin;
 
   function checkPage(needed) {
@@ -2318,7 +2318,7 @@ function exportPDF() {
             doc.setFontSize(6);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(120);
-            doc.text(`${check.lat.toFixed(4)},${check.lng.toFixed(4)}`, colPhases[i], y + 3.5);
+            doc.text(`${check.lat.toFixed(4)},${check.lng.toFixed(4)}`, colPhases[i], y + 2.5);
           }
         } else {
           doc.setFontSize(8);
@@ -2339,10 +2339,6 @@ function exportPDF() {
       } else {
         y += rowH;
       }
-
-      // linea separatrice leggera
-      doc.setDrawColor(220);
-      doc.line(margin, y - 1, pageW - margin, y - 1);
     });
 
     y += 4;
@@ -2350,7 +2346,7 @@ function exportPDF() {
 
   const classi = Object.keys(state.classes).sort().join('_');
   const data = formatDate(Date.now(), true).replace(/-/g, '_');
-  doc.save(`appello_${state.tripName.replace(/\s+/g, '_')}-${classi}-${data}.pdf`);
+  doc.save(`uscita_${state.tripName.replace(/\s+/g, '_')}-${classi}-${data}.pdf`);
   showToast('PDF esportato');
 }
 
