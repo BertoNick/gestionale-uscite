@@ -7,8 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Appello uscita didattica">
-<title>Appello uscita didattica</title>
+<meta name="apple-mobile-web-app-title" content="Uscita didattica">
+<title>Uscita didattica</title>
 
 <script src="jsQR.min.js"></script>
 <!-- jsPDF via CDN -->
@@ -1175,7 +1175,7 @@ body {
     </button>
   </div>
   <div class="menu-section" style="border: none">
-    <p style="font-size:11px;color:var(--text-muted);">Appello uscita didattica v1.0 · Dati salvati in locale</p>
+    <p style="font-size:11px;color:var(--text-muted);">Uscita didattica v1.0 · Dati salvati in locale</p>
   </div>
 </div>
 
@@ -2253,7 +2253,7 @@ if (logo && logo.tagName === 'IMG') {
     y += 6;
   });
 
-  doc.save(`appello_${state.tripName.replace(/\s+/g, '_')}_${formatDate(Date.now(), true)}.pdf`);
+  doc.save(`uscita_${state.tripName.replace(/\s+/g, '_')}_${formatDate(Date.now(), true)}.pdf`);
   showToast('📄 PDF esportato');
 }
 
@@ -2345,9 +2345,9 @@ function registerSW() {
    ============================================================ */
 (function injectManifest() {
   const manifest = {
-    name: 'Appello uscita didattica',
-    short_name: 'Appello uscita didattica',
-    description: 'Gestione presenze uscita didattica',
+    name: 'Uscita didattica',
+    short_name: 'Uscita didattica',
+    description: 'Gestione uscita didattica',
     start_url: '.',
     display: 'standalone',
     orientation: 'portrait',
