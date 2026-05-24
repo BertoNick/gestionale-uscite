@@ -1821,6 +1821,9 @@ function handleQrFile(event) {
       const canvas = document.getElementById('qr-canvas');
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
+      // log DOPO aver definito canvas
+      console.log('Immagine caricata:', img.width, 'x', img.height, 'px'); //*******************************************
+
       // ridimensiono a max 1024px mantenendo le proporzioni
       // jsQR lavora meglio su immagini non troppo grandi
       const MAX = 1024;
@@ -1828,11 +1831,17 @@ function handleQrFile(event) {
       canvas.width  = Math.round(img.width  * scale);
       canvas.height = Math.round(img.height * scale);
 
+      // log DOPO aver ridimensionato il canvas
+      console.log('Canvas ridimensionato:', canvas.width, 'x', canvas.height, 'px'); //********************************
+
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const code = jsQR(imgData.data, imgData.width, imgData.height, {
         inversionAttempts: 'attemptBoth'  // prova anche QR invertiti (bianco su nero)
       });
+
+      console.log('Risultato jsQR:', code); //***************************************************************************
+
       if (code) processImportData(code.data);
       else showToast('⚠️ QR non riconosciuto nella foto');
     };
