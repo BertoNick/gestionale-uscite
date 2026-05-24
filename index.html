@@ -1606,7 +1606,10 @@ function buildStudentCard(s, cn) {
       <div class="student-meta">${lastMeta}</div>
     </div>
     <div class="phase-dots">${phaseDots}</div>
-    <button class="btn-card-detail" data-id="${s.id}" data-class="${cn}" title="Dettagli">📝</button>
+    <button class="btn-card-detail" data-id="${s.id}" data-class="${cn}" title="Dettagli">
+      <span style="font-size:16px">📝</span>
+      <span style="font-size:10px;display:block;line-height:1;color:var(--text-muted);font-family:var(--font-sans);">note</span>
+    </button>
   `;
 
   card.querySelector('.btn-card-detail').addEventListener('click', e => {
@@ -1617,8 +1620,13 @@ function buildStudentCard(s, cn) {
   // tap = segna presente
   let pressTimer;
   let isLongPress = false;
+  let pointerOnDetail = false; // ← tiene traccia se il dito era sul bottone
 
-  card.addEventListener('pointerdown', () => {
+  card.addEventListener('pointerdown', (e) => {
+    // se il pointerdown parte dal bottone dettagli, ignoro tutto
+    pointerOnDetail = !!e.target.closest('.btn-card-detail');
+    if (pointerOnDetail) return;
+
     isLongPress = false;
     pressTimer = setTimeout(() => {
       isLongPress = true;
@@ -1629,10 +1637,14 @@ function buildStudentCard(s, cn) {
 
   card.addEventListener('pointerup', () => {
     clearTimeout(pressTimer);
-    if (!isLongPress) toggleStudentPhase(s.id, cn);
+    if (!isLongPress && !pointerOnDetail) toggleStudentPhase(s.id, cn);
+    pointerOnDetail = false;
   });
 
-  card.addEventListener('pointerleave', () => { clearTimeout(pressTimer); });
+  card.addEventListener('pointerleave', () => {
+    clearTimeout(pressTimer);
+    pointerOnDetail = false;
+  });
 
   card.addEventListener('contextmenu', e => e.preventDefault());
 
