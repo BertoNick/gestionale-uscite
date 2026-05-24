@@ -2085,13 +2085,57 @@ function saveDetailNotes() {
   const s = state.classes[detailClassName].find(st => st.id === detailStudentId);
   if (!s) return;
 
-  s.notes = document.getElementById('detail-notes').value;
+  // salvo subito l'adesione che non dipende dalla geo
   s.adesione = document.getElementById('detail-ade-toggle').classList.contains('on');
-  saveState();
-  refreshCard(detailStudentId, detailClassName);
-  renderTabs();
-  closeDetail();
-  showToast('Salvato');
+
+  const testo = document.getElementById('detail-notes').value.trim();
+
+  if (!testo) {
+    // nota vuota: salvo e chiudo subito
+    s.notes = '';
+    saveState();
+    refreshCard(detailStudentId, detailClassName);
+    renderTabs();
+    closeDetail();
+    showToast('Salvato');
+    return;
+  }
+
+  // nota presente: prependo ora + coordinate
+  const ora = formatTime(Date.now());
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        // geo disponibile
+        const prefix = `[${ora} | ${pos.coords.latitude.toFixed(4)},${pos.coords.longitude.toFixed(4)}]`;
+        s.notes = `${prefix} ${testo}`;
+        saveState();
+        refreshCard(detailStudentId, detailClassName);
+        renderTabs();
+        closeDetail();
+        showToast('Salvato');
+      },
+      () => {
+        // geo negata o timeout: solo ora
+        s.notes = `[${ora}] ${testo}`;
+        saveState();
+        refreshCard(detailStudentId, detailClassName);
+        renderTabs();
+        closeDetail();
+        showToast('Salvato');
+      },
+      { timeout: 3000, maximumAge: 30000 }
+    );
+  } else {
+    // geo non supportata: solo ora
+    s.notes = `[${ora}] ${testo}`;
+    saveState();
+    refreshCard(detailStudentId, detailClassName);
+    renderTabs();
+    closeDetail();
+    showToast('Salvato');
+  }
 }
 
 function deleteStudentFromDetail() {
@@ -2279,7 +2323,7 @@ function exportPDF() {
     // ---- RIGHE STUDENTI ----
     students.forEach((s, idx) => {
       // ogni studente occupa 2 righe (ora + coordinate)
-      const rowH = s.adesione ? lineH + 3 : lineH;
+      const rowH = s.notes ? lineH + 4 : (s.adesione ? lineH + 2 : lineH);
       checkPage(rowH + 2);
 
       // sfondo alternato sulle righe
