@@ -535,110 +535,6 @@ body {
 }
 
 /* ============================================================
-   SCANNER QR
-   ============================================================ */
-#qr-modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.85);
-  z-index: 600;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 0;
-}
-#qr-modal.open { display: flex; }
-
-#qr-header {
-  width: 100%;
-  background: #000;
-  padding: 16px 20px;
-  padding-top: calc(16px + env(safe-area-inset-top, 0px));
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-#qr-header h2 { color: #fff; font-size: 17px; font-weight: 700; flex: 1; }
-#btn-qr-close { background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
-
-#qr-video-wrap {
-  width: 100%;
-  max-width: 480px;
-  position: relative;
-  margin: 0 auto;
-}
-#qr-video {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  display: block;
-  background: #111;
-}
-#qr-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-.qr-frame {
-  width: 65%;
-  aspect-ratio: 1;
-  border: 2px solid var(--accent-eu-gold);
-  border-radius: 12px;
-  box-shadow: 0 0 0 2000px rgba(0,0,0,.35);
-  position: relative;
-}
-.qr-frame::before, .qr-frame::after,
-.qr-frame span::before, .qr-frame span::after {
-  content: '';
-  position: absolute;
-  width: 20px; height: 20px;
-  border-color: var(--accent-eu-gold);
-  border-style: solid;
-}
-.qr-frame::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
-.qr-frame::after { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
-.qr-frame span::before { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
-.qr-frame span::after { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
-
-#qr-status {
-  color: #fff;
-  text-align: center;
-  padding: 16px 20px;
-  font-size: 14px;
-  opacity: .85;
-}
-#qr-canvas { display: none; }
-
-/* modal upload manuale */
-#qr-upload-area {
-  width: 100%;
-  max-width: 480px;
-  padding: 0 20px 20px;
-}
-#qr-file-input { display: none; }
-.btn-upload {
-  width: 100%;
-  background: rgba(255,255,255,.1);
-  border: 1.5px solid rgba(255,255,255,.3);
-  border-radius: 12px;
-  padding: 14px;
-  color: #fff;
-  font-size: 14px;
-  font-family: var(--font-sans);
-  font-weight: 600;
-  cursor: pointer;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-/* ============================================================
    MENU LATERALE / DRAWER
    ============================================================ */
 #menu-overlay {
@@ -1034,24 +930,72 @@ body {
   font-size: 40px;
 }
 
-.qr-tab-btn {
-  flex: 1;
-  background: rgba(255,255,255,.1);
-  border: 1.5px solid rgba(255,255,255,.25);
-  border-radius: 8px;
-  color: rgba(255,255,255,.65);
-  font-size: 13px;
-  font-weight: 600;
+/* griglia 2x2 importazione classi */
+.import-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+.btn-import {
+  border: none;
+  border-radius: 12px;
+  padding: 18px 10px;
+  font-size: 14px;
+  font-weight: 700;
   font-family: var(--font-sans);
-  padding: 9px 0;
-  cursor: pointer;
-  transition: all .15s;
-}
-.qr-tab-btn.active {
-  background: rgba(255,255,255,.22);
-  border-color: var(--accent-eu-gold);
   color: #fff;
+  cursor: pointer;
+  transition: filter .15s;
+  line-height: 1.3;
 }
+.btn-import:active { filter: brightness(.85); }
+.btn-import.cam    { background: #003580; }
+.btn-import.file   { background: #1565C0; }
+.btn-import.json   { background: #2E7D32; }
+.btn-import.manual { background: #37474F; }
+
+/* modal camera semplificato */
+#camera-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.92);
+  z-index: 600;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+#camera-modal.open { display: flex; }
+#camera-header {
+  width: 100%;
+  background: #000;
+  padding: 16px 20px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#camera-header h2 { color: #fff; font-size: 17px; font-weight: 700; flex: 1; }
+#btn-camera-close { background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
+#camera-status {
+  color: #fff;
+  text-align: center;
+  padding: 16px 20px 0;
+  font-size: 14px;
+  opacity: .85;
+}
+
+/* modal incolla JSON */
+#paste-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 600;
+  align-items: flex-end;
+}
+#paste-modal.open { display: flex; }
 
 #btn-start-trip {
   background: #2E7D32;
@@ -1098,9 +1042,13 @@ body {
     <div id="no-classes-view">
       <div class="icon">📋</div>
       <h2>Nessuna classe</h2>
-      <p>Scansiona un QR code o aggiungi una classe manualmente per iniziare.</p>
-      <button class="btn-primary" style="max-width:240px;margin-top:8px" onclick="openQrScanner()">📷 Scansiona QR</button>
-      <button class="btn-secondary" style="max-width:240px" onclick="openAddClassManual()">✏️ Aggiungi manuale</button>
+      <p>Importa una classe per iniziare.</p>
+      <div class="import-grid" style="max-width:280px;margin-top:8px">
+        <button class="btn-import cam"    onclick="openCamera()">Fotocamera</button>
+        <button class="btn-import file"   onclick="openFileQR()">Carica foto QR</button>
+        <button class="btn-import json"   onclick="openPasteJSON()">Incolla JSON</button>
+        <button class="btn-import manual" onclick="openAddClassManual()">Manuale</button>
+      </div>
     </div>
   </main>
 
@@ -1128,8 +1076,12 @@ body {
   <div class="setup-card" style="max-width:400px;width:100%">
     <h3>Importa classi</h3>
     <div id="setup-classes-list"></div>
-    <button class="btn-primary" onclick="openQrScanner(true)">Scansione QR lista studenti</button>
-    <button class="btn-secondary" onclick="openAddClassManual(true)">Aggiunta classe manuale</button>
+    <div class="import-grid">
+      <button class="btn-import cam"    onclick="openCamera(true)">Fotocamera</button>
+      <button class="btn-import file"   onclick="openFileQR(true)">Carica foto QR</button>
+      <button class="btn-import json"   onclick="openPasteJSON(true)">Incolla JSON</button>
+      <button class="btn-import manual" onclick="openAddClassManual(true)">Inserimento manuale</button>
+    </div>
   </div>
 
   <div style="max-width:400px;width:100%;margin-top:8px">
@@ -1142,50 +1094,43 @@ body {
   </div>
 </div>
 
-<!-- ============================================================
-     SCANNER QR
-     ============================================================ -->
-<div id="qr-modal">
-  <div id="qr-header">
-    <h2>Scansiona QR classe</h2>
-    <button id="btn-qr-close" onclick="closeQrScanner()">✕</button>
+<!-- MODAL FOTOCAMERA -->
+<div id="camera-modal">
+  <div id="camera-header">
+    <h2>Fotocamera</h2>
+    <button id="btn-camera-close" onclick="closeCamera()">✕</button>
   </div>
   <div id="qr-video-wrap">
     <video id="qr-video" playsinline muted autoplay></video>
     <div id="qr-overlay"><div class="qr-frame"><span></span></div></div>
     <canvas id="qr-canvas"></canvas>
   </div>
-  <p id="qr-status">Inquadra il QR code con la lista studenti</p>
-  <div id="qr-upload-area">
-  <!-- tab switcher -->
-  <div style="display:flex;gap:8px;margin-bottom:12px;">
-    <button class="qr-tab-btn active" id="tab-btn-camera" onclick="switchQrTab('camera')">📷 Fotocamera</button>
-    <button class="qr-tab-btn" id="tab-btn-paste" onclick="switchQrTab('paste')">📋 Incolla JSON</button>
-  </div>
-
-  <!-- pannello fotocamera (upload immagine) -->
-  <div id="qr-panel-camera">
-    <input type="file" id="qr-file-input" accept="image/*" onchange="handleQrFile(event)">
-    <button class="btn-upload" onclick="document.getElementById('qr-file-input').click()">
-      📁 Carica immagine QR
-    </button>
-  </div>
-
-  <!-- pannello incolla JSON -->
-  <div id="qr-panel-paste" style="display:none;">
-    <p style="color:rgba(255,255,255,.7);font-size:12px;margin-bottom:8px;">
-      Incolla il JSON della classe (ricevuto via WhatsApp, email, ecc.)
-    </p>
-    <textarea id="json-paste-input"
-      placeholder='{"classe":"2FS","studenti":[{"cognome":"Rossi","nome":"Mario"}]}'
-      style="width:100%;height:110px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.3);
-             border-radius:10px;padding:10px;color:#fff;font-size:12px;font-family:var(--font-mono);
-             resize:none;outline:none;"></textarea>
-    <button class="btn-upload" style="margin-top:8px;" onclick="importFromPaste()">
-      ✅ Importa classe
-    </button>
-  </div>
+  <p id="camera-status">Inquadra il QR code con la lista studenti</p>
 </div>
+
+<!-- INPUT FILE (invisibile, aperto da openFileQR) -->
+<input type="file" id="qr-file-input" accept="image/*"
+       style="display:none" onchange="handleQrFile(event)">
+
+<!-- MODAL INCOLLA JSON -->
+<div id="paste-modal" onclick="if(event.target===this)closePasteJSON()">
+  <div style="width:100%;background:var(--bg-main);border-radius:20px 20px 0 0;
+              padding:0 20px calc(24px + var(--bottom-safe));animation:slideUp .25s ease">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      Incolla JSON classe
+      <button onclick="closePasteJSON()">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">
+      Incolla il testo JSON ricevuto via WhatsApp, email, ecc.
+    </p>
+    <textarea class="notes-textarea" id="json-paste-input"
+      placeholder='{"classe":"2FS","studenti":[{"cognome":"Rossi","nome":"Mario"}]}'
+      style="min-height:120px;font-family:var(--font-mono);font-size:12px;"></textarea>
+    <button class="btn-primary" style="margin-top:12px" onclick="importFromPaste()">
+      Importa classe
+    </button>
+  </div>
 </div>
 
 <!-- ============================================================
@@ -1204,11 +1149,17 @@ body {
     <button class="menu-item" onclick="openCustomPhaseEdit(); closeMenu()">
       <span class="icon"></span> Rinomina fase custom
     </button>
-    <button class="menu-item" onclick="openQrScanner(); closeMenu()">
-      <span class="icon"></span> Scansione QR (nuova classe)
+    <button class="menu-item" onclick="openCamera(); closeMenu()">
+      <span class="icon"></span> Fotocamera QR
+    </button>
+    <button class="menu-item" onclick="openFileQR(); closeMenu()">
+      <span class="icon"></span> Carica foto QR
+    </button>
+    <button class="menu-item" onclick="openPasteJSON(); closeMenu()">
+      <span class="icon"></span> Incolla JSON
     </button>
     <button class="menu-item" onclick="openAddClassManual(); closeMenu()">
-      <span class="icon"></span> Aggiungta classe manuale
+      <span class="icon"></span> Inserimento manuale
     </button>
   </div>
   <div class="menu-section">
@@ -1777,213 +1728,169 @@ function startTrip() {
 }
 
 /* ============================================================
-   SCANNER QR
+   IMPORTAZIONE CLASSI
    ============================================================ */
 let qrStream = null;
 let qrAnimFrame = null;
-let qrFromSetup = false;
+let importFromSetup = false;
 
-function openQrScanner(fromSetup = false) {
-  qrFromSetup = fromSetup;
-  document.getElementById('qr-modal').classList.add('open');
-  document.getElementById('qr-status').textContent = '⏳ Caricamento scanner...';
-  loadJsQR().then(() => {
-    document.getElementById('qr-status').textContent = 'Inquadra il QR code con la lista studenti';
-    startCamera();
-  });
+// --- FOTOCAMERA ---
+function openCamera(fromSetup = false) {
+  importFromSetup = fromSetup;
+  document.getElementById('camera-modal').classList.add('open');
+  document.getElementById('camera-status').textContent = 'Inquadra il QR code con la lista studenti';
+  startCamera();
 }
 
-function loadJsQR() {
-  return new Promise((resolve, reject) => {
-    if (typeof jsQR === 'function') {
-      resolve();
-    } else {
-      // jsQR non trovato: probabilmente il file locale manca
-      document.getElementById('qr-status').textContent = '⚠️ Scanner QR non disponibile.';
-      reject(new Error('jsQR non trovato'));
-    }
-  });
-}
-
-function closeQrScanner() {
-  document.getElementById('qr-modal').classList.remove('open');
+function closeCamera() {
+  document.getElementById('camera-modal').classList.remove('open');
   stopCamera();
-}
-
-function switchQrTab(tab) {
-  // aggiorno i bottoni tab
-  document.getElementById('tab-btn-camera').classList.toggle('active', tab === 'camera');
-  document.getElementById('tab-btn-paste').classList.toggle('active', tab === 'paste');
-
-  // mostro/nascondo i pannelli
-  document.getElementById('qr-panel-camera').style.display = tab === 'camera' ? '' : 'none';
-  document.getElementById('qr-panel-paste').style.display  = tab === 'paste'  ? '' : 'none';
-
-  if (tab === 'camera') {
-    document.getElementById('qr-video').style.display = '';
-    if (!qrStream) startCamera();
-  } else {
-    stopCamera();
-    // nascondo il video così non rimane il frame congelato
-    document.getElementById('qr-video').style.display = 'none';
-    document.getElementById('json-paste-input').value = '';
-    setTimeout(() => document.getElementById('json-paste-input').focus(), 100);
-  }
-}
-
-function importFromPaste() {
-  const raw = document.getElementById('json-paste-input').value.trim();
-  if (!raw) { showToast('⚠️ Incolla prima il JSON'); return; }
-
-  // il testo potrebbe arrivare da WhatsApp con virgolette "smart" (es. " invece di ")
-  // le normalizziamo prima di fare il parse
-  const normalized = raw
-    .replace(/[\u2018\u2019]/g, "'")   // virgolette singole curve → dritte
-    .replace(/[\u201C\u201D]/g, '"');  // virgolette doppie curve → dritte
-
-  try {
-    const data = JSON.parse(normalized);
-
-    // validazione: serve almeno "classe" e "studenti"
-    if (!data.classe || !Array.isArray(data.studenti)) {
-      showToast('⚠️ JSON non valido: servono "classe" e "studenti"');
-      return;
-    }
-
-    // riuso processQrData che sa già come importare
-    processQrData(normalized);
-
-  } catch(e) {
-    // JSON malformato: diamo un messaggio utile
-    showToast('⚠️ JSON errore formato. Controlla le virgolette e le parentesi.');
-    console.warn('Errore parsing JSON:', e.message);
-  }
 }
 
 async function startCamera() {
   const video = document.getElementById('qr-video');
-  
-  // proviamo prima environment (posteriore), poi qualsiasi
   const attempts = [
-    { video: { facingMode: 'environment' } },  // rimosso "exact" che causa falsi errori
+    { video: { facingMode: 'environment' } },
     { video: true }
   ];
-
   for (const constraint of attempts) {
     try {
       qrStream = await navigator.mediaDevices.getUserMedia(constraint);
       video.srcObject = qrStream;
-      // su iOS il play() deve essere chiamato dopo l'evento loadedmetadata
       await new Promise(resolve => {
         video.onloadedmetadata = resolve;
-        video.play().catch(resolve); // fallback se l'evento non scatta
+        video.play().catch(resolve);
       });
       scanQrLoop();
       return;
     } catch(e) {
-      console.warn('tentativo fotocamera fallito:', e.name, e.message);
-      // se è un errore di permessi negati, inutile riprovare
       if (e.name === 'NotAllowedError') {
-        document.getElementById('qr-status').textContent = '⚠️ Permesso fotocamera negato. Usa "Carica immagine QR".';
+        document.getElementById('camera-status').textContent = '⚠️ Permesso fotocamera negato.';
         return;
       }
-      // altrimenti proviamo il prossimo constraint
     }
   }
-  document.getElementById('qr-status').textContent = '⚠️ Fotocamera non disponibile. Usa "Carica immagine QR".';
+  document.getElementById('camera-status').textContent = '⚠️ Fotocamera non disponibile.';
 }
 
 function stopCamera() {
   if (qrAnimFrame) { cancelAnimationFrame(qrAnimFrame); qrAnimFrame = null; }
   if (qrStream) { qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
-  const video = document.getElementById('qr-video');
-  video.srcObject = null;
+  document.getElementById('qr-video').srcObject = null;
 }
 
 function scanQrLoop() {
   const video = document.getElementById('qr-video');
   const canvas = document.getElementById('qr-canvas');
-  const ctx = canvas.getContext('2d');
-
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (video.readyState === video.HAVE_ENOUGH_DATA) {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'dontInvert' });
-    if (code) {
-      processQrData(code.data);
-      return;
-    }
+    if (code) { processImportData(code.data); return; }
   }
   qrAnimFrame = requestAnimationFrame(scanQrLoop);
+}
+
+// --- CARICA FOTO QR ---
+function openFileQR(fromSetup = false) {
+  importFromSetup = fromSetup;
+  document.getElementById('qr-file-input').click();
 }
 
 function handleQrFile(event) {
   const file = event.target.files[0];
   if (!file) return;
-  loadJsQR().then(() => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.getElementById('qr-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imgData.data, imgData.width, imgData.height);
-        if (code) processQrData(code.data);
-        else { document.getElementById('qr-status').textContent = '⚠️ QR non riconosciuto. Riprova.'; }
-      };
-      img.src = e.target.result;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.getElementById('qr-canvas');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imgData.data, imgData.width, imgData.height);
+      if (code) processImportData(code.data);
+      else showToast('⚠️ QR non riconosciuto nella foto');
     };
-    reader.readAsDataURL(file);
-  });
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
   event.target.value = '';
 }
 
-function processQrData(raw) {
+// --- INCOLLA JSON ---
+function openPasteJSON(fromSetup = false) {
+  importFromSetup = fromSetup;
+  document.getElementById('json-paste-input').value = '';
+  document.getElementById('paste-modal').classList.add('open');
+  setTimeout(() => document.getElementById('json-paste-input').focus(), 100);
+}
+
+function closePasteJSON() {
+  document.getElementById('paste-modal').classList.remove('open');
+}
+
+function importFromPaste() {
+  const raw = document.getElementById('json-paste-input').value.trim();
+  if (!raw) { showToast('⚠️ Incolla prima il JSON'); return; }
+  // normalizzo virgolette curve (WhatsApp le sostituisce)
+  const normalized = raw
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"');
+  try {
+    const data = JSON.parse(normalized);
+    if (!data.classe || !Array.isArray(data.studenti)) {
+      showToast('⚠️ Serve "classe" e "studenti" nel JSON'); return;
+    }
+    processImportData(normalized);
+    closePasteJSON();
+  } catch(e) {
+    showToast('⚠️ JSON non valido. Controlla virgolette e parentesi.');
+    console.warn('JSON parse error:', e.message);
+  }
+}
+
+// --- ELABORAZIONE DATI (comune a tutti i metodi) ---
+function processImportData(raw) {
   stopCamera();
-  console.log('QR letto:', raw); // ← rimuovi dopo il debug*************************************************************
   try {
     const data = JSON.parse(raw);
     if (!data.classe || !Array.isArray(data.studenti)) throw new Error('formato non valido');
 
-    const cn = data.classe.trim();
+    const cn = data.classe.trim().toUpperCase();
     const students = data.studenti.map(st => createStudent(st.cognome, st.nome, st.adesione !== false));
 
-    if (qrFromSetup) {
+    if (importFromSetup) {
       setupClasses[cn] = students;
       updateSetupClassList();
-      document.getElementById('qr-status').textContent = `✅ Classe ${cn} importata (${students.length} studenti)`;
-      showToast(`✅ Classe ${cn} importata`);
-      setTimeout(closeQrScanner, 1500);
+      showToast(`Classe ${cn} importata (${students.length} studenti)`);
+      closeCamera();
     } else {
-      // aggiunta a gita già avviata
       if (state.classes[cn]) {
-        // merge: aggiungo solo studenti non già presenti
         const existing = state.classes[cn];
         let added = 0;
         students.forEach(ns => {
-          const dup = existing.find(e => e.cognome === ns.cognome && e.nome === ns.nome);
-          if (!dup) { existing.push(ns); added++; }
+          if (!existing.find(e => e.cognome === ns.cognome && e.nome === ns.nome)) {
+            existing.push(ns); added++;
+          }
         });
         showToast(`Classe ${cn}: ${added} nuovi studenti aggiunti`);
       } else {
         state.classes[cn] = students;
-        showToast(`✅ Classe ${cn} importata`);
+        showToast(`Classe ${cn} importata`);
       }
       saveState();
       renderAll();
-      closeQrScanner();
+      if (qrStream) closeCamera(); // chiude la camera solo se era attiva
     }
   } catch(e) {
-    document.getElementById('qr-status').textContent = '⚠️ QR non valido. Formato atteso: {classe, studenti}';
-    showToast('⚠️ QR non valido');
-    // riprendo la camera dopo 2s
-    setTimeout(() => { if (document.getElementById('qr-modal').classList.contains('open')) startCamera(); }, 2000);
+    showToast('⚠️ Dati non validi. Formato: {"classe":"2A","studenti":[...]}');
+    console.warn('processImportData error:', e.message);
   }
 }
 
