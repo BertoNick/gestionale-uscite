@@ -1171,6 +1171,9 @@ body {
     <button class="menu-item" onclick="exportPDF(); closeMenu()">
       <span class="icon"></span> Esporta PDF riepilogo
     </button>
+    <button class="menu-item" onclick="exportCSV(); closeMenu()">
+      <span class="icon"></span> Esporta CSV dati
+    </button>
   </div>
   <div class="menu-section">
     <h3>Dati</h3>
@@ -2397,6 +2400,58 @@ function exportPDF() {
   const data = formatDate(Date.now(), true).replace(/-/g, '_');
   doc.save(`uscita_${state.tripName.replace(/\s+/g, '_')}-${classi}-${data}.pdf`);
   showToast('PDF esportato');
+}
+
+function exportCSV() {
+  const phases = getPhaseNames();
+
+  // intestazione: per ogni fase, tre colonne separate
+  const phaseHeaders = phases.flatMap(ph => [
+    `${ph}_ora`,
+    `${ph}_lat`,
+    `${ph}_lng`
+  ]);
+
+  const headers = ['Classe', 'N°', 'Cognome', 'Nome', 'Adesione', ...phaseHeaders, 'Note'];
+  const rows = [headers];
+
+  Object.keys(state.classes).sort().forEach(cn => {
+    const students = [...state.classes[cn]].sort((a, b) => a.cognome.localeCompare(b.cognome));
+    students.forEach((s, idx) => {
+      const phaseCells = phases.flatMap((_, i) => {
+        const check = s.phases[i];
+        if (!check) return ['', '', ''];
+        return [
+          formatTime(check.ts),
+          check.lat !== null ? check.lat.toFixed(6) : '',
+          check.lng !== null ? check.lng.toFixed(6) : ''
+        ];
+      });
+
+      const row = [
+        cn,
+        idx + 1,
+        s.cognome,
+        s.nome,
+        s.adesione ? 'Sì' : 'No',
+        ...phaseCells,
+        s.notes ? `"${s.notes.replace(/"/g, '""')}"` : ''
+      ];
+      rows.push(row);
+    });
+  });
+
+  const csv = rows.map(r => r.join(';')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const classi = Object.keys(state.classes).sort().join('_');
+  const data = formatDate(Date.now(), true).replace(/-/g, '_');
+  a.download = `uscita_${state.tripName.replace(/\s+/g, '_')}-${classi}-${data}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV esportato');
 }
 
 /* ============================================================
