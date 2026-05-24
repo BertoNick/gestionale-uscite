@@ -12,8 +12,7 @@
 
 <!-- jsPDF via CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- jsQR via CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&family=Lora:ital,wght@0,400;0,600;1,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1774,8 +1773,28 @@ let qrFromSetup = false;
 function openQrScanner(fromSetup = false) {
   qrFromSetup = fromSetup;
   document.getElementById('qr-modal').classList.add('open');
-  document.getElementById('qr-status').textContent = 'Inquadra il QR code con la lista studenti';
-  startCamera();
+  document.getElementById('qr-status').textContent = '⏳ Caricamento scanner...';
+  loadJsQR().then(() => {
+    document.getElementById('qr-status').textContent = 'Inquadra il QR code con la lista studenti';
+    startCamera();
+  });
+}
+
+// carica jsQR solo se non è già caricato
+function loadJsQR() {
+  return new Promise((resolve, reject) => {
+    // se è già disponibile, non ricaricare
+    if (typeof jsQR === 'function') { resolve(); return; }
+
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
+    script.onload = resolve;
+    script.onerror = () => {
+      document.getElementById('qr-status').textContent = '⚠️ Impossibile caricare lo scanner. Controlla la connessione.';
+      reject(new Error('jsQR non caricato'));
+    };
+    document.head.appendChild(script);
+  });
 }
 
 function closeQrScanner() {
@@ -1793,12 +1812,12 @@ function switchQrTab(tab) {
   document.getElementById('qr-panel-paste').style.display  = tab === 'paste'  ? '' : 'none';
 
   if (tab === 'camera') {
-    // riavvio la fotocamera solo se non è già attiva
+    document.getElementById('qr-video').style.display = '';
     if (!qrStream) startCamera();
   } else {
-    // fermo la fotocamera per non consumare batteria
     stopCamera();
-    // pulisco il campo per evitare dati precedenti
+    // nascondo il video così non rimane il frame congelato
+    document.getElementById('qr-video').style.display = 'none';
     document.getElementById('json-paste-input').value = '';
     setTimeout(() => document.getElementById('json-paste-input').focus(), 100);
   }
@@ -1895,23 +1914,25 @@ function scanQrLoop() {
 function handleQrFile(event) {
   const file = event.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.getElementById('qr-canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imgData.data, imgData.width, imgData.height);
-      if (code) processQrData(code.data);
-      else { document.getElementById('qr-status').textContent = '⚠️ QR non riconosciuto. Riprova.'; }
+  loadJsQR().then(() => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.getElementById('qr-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imgData.data, imgData.width, imgData.height);
+        if (code) processQrData(code.data);
+        else { document.getElementById('qr-status').textContent = '⚠️ QR non riconosciuto. Riprova.'; }
+      };
+      img.src = e.target.result;
     };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  });
   event.target.value = '';
 }
 
