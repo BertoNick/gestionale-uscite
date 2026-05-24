@@ -2348,7 +2348,9 @@ function exportPDF() {
     y += 4;
   });
 
-  doc.save(`appello_${state.tripName.replace(/\s+/g, '_')}_${formatDate(Date.now(), true)}.pdf`);
+  const classi = Object.keys(state.classes).sort().join('_');
+  const data = formatDate(Date.now(), true).replace(/-/g, '_');
+  doc.save(`appello_${state.tripName.replace(/\s+/g, '_')}-${classi}-${data}.pdf`);
   showToast('PDF esportato');
 }
 
