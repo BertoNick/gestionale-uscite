@@ -1033,6 +1033,25 @@ body {
   justify-content: center;
   font-size: 40px;
 }
+
+.qr-tab-btn {
+  flex: 1;
+  background: rgba(255,255,255,.1);
+  border: 1.5px solid rgba(255,255,255,.25);
+  border-radius: 8px;
+  color: rgba(255,255,255,.65);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  padding: 9px 0;
+  cursor: pointer;
+  transition: all .15s;
+}
+.qr-tab-btn.active {
+  background: rgba(255,255,255,.22);
+  border-color: var(--accent-eu-gold);
+  color: #fff;
+}
 </style>
 </head>
 
@@ -1130,11 +1149,35 @@ body {
   </div>
   <p id="qr-status">Inquadra il QR code con la lista studenti</p>
   <div id="qr-upload-area">
+  <!-- tab switcher -->
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <button class="qr-tab-btn active" id="tab-btn-camera" onclick="switchQrTab('camera')">📷 Fotocamera</button>
+    <button class="qr-tab-btn" id="tab-btn-paste" onclick="switchQrTab('paste')">📋 Incolla JSON</button>
+  </div>
+
+  <!-- pannello fotocamera (upload immagine) -->
+  <div id="qr-panel-camera">
     <input type="file" id="qr-file-input" accept="image/*" onchange="handleQrFile(event)">
     <button class="btn-upload" onclick="document.getElementById('qr-file-input').click()">
-      Carica immagine QR
+      📁 Carica immagine QR
     </button>
   </div>
+
+  <!-- pannello incolla JSON -->
+  <div id="qr-panel-paste" style="display:none;">
+    <p style="color:rgba(255,255,255,.7);font-size:12px;margin-bottom:8px;">
+      Incolla il JSON della classe (ricevuto via WhatsApp, email, ecc.)
+    </p>
+    <textarea id="json-paste-input"
+      placeholder='{"classe":"2FS","studenti":[{"cognome":"Rossi","nome":"Mario"}]}'
+      style="width:100%;height:110px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.3);
+             border-radius:10px;padding:10px;color:#fff;font-size:12px;font-family:var(--font-mono);
+             resize:none;outline:none;"></textarea>
+    <button class="btn-upload" style="margin-top:8px;" onclick="importFromPaste()">
+      ✅ Importa classe
+    </button>
+  </div>
+</div>
 </div>
 
 <!-- ============================================================
@@ -1732,28 +1775,86 @@ function closeQrScanner() {
   stopCamera();
 }
 
+function switchQrTab(tab) {
+  // aggiorno i bottoni tab
+  document.getElementById('tab-btn-camera').classList.toggle('active', tab === 'camera');
+  document.getElementById('tab-btn-paste').classList.toggle('active', tab === 'paste');
+
+  // mostro/nascondo i pannelli
+  document.getElementById('qr-panel-camera').style.display = tab === 'camera' ? '' : 'none';
+  document.getElementById('qr-panel-paste').style.display  = tab === 'paste'  ? '' : 'none';
+
+  if (tab === 'camera') {
+    // riavvio la fotocamera solo se non è già attiva
+    if (!qrStream) startCamera();
+  } else {
+    // fermo la fotocamera per non consumare batteria
+    stopCamera();
+    // pulisco il campo per evitare dati precedenti
+    document.getElementById('json-paste-input').value = '';
+    setTimeout(() => document.getElementById('json-paste-input').focus(), 100);
+  }
+}
+
+function importFromPaste() {
+  const raw = document.getElementById('json-paste-input').value.trim();
+  if (!raw) { showToast('⚠️ Incolla prima il JSON'); return; }
+
+  // il testo potrebbe arrivare da WhatsApp con virgolette "smart" (es. " invece di ")
+  // le normalizziamo prima di fare il parse
+  const normalized = raw
+    .replace(/[\u2018\u2019]/g, "'")   // virgolette singole curve → dritte
+    .replace(/[\u201C\u201D]/g, '"');  // virgolette doppie curve → dritte
+
+  try {
+    const data = JSON.parse(normalized);
+
+    // validazione: serve almeno "classe" e "studenti"
+    if (!data.classe || !Array.isArray(data.studenti)) {
+      showToast('⚠️ JSON non valido: servono "classe" e "studenti"');
+      return;
+    }
+
+    // riuso processQrData che sa già come importare
+    processQrData(normalized);
+
+  } catch(e) {
+    // JSON malformato: diamo un messaggio utile
+    showToast('⚠️ JSON errore formato. Controlla le virgolette e le parentesi.');
+    console.warn('Errore parsing JSON:', e.message);
+  }
+}
+
 async function startCamera() {
-  // provo prima con la fotocamera posteriore, poi fallback a qualsiasi camera
-  const constraints = [
-    { video: { facingMode: { exact: 'environment' } } },
-    { video: { facingMode: 'environment' } },
+  const video = document.getElementById('qr-video');
+  
+  // proviamo prima environment (posteriore), poi qualsiasi
+  const attempts = [
+    { video: { facingMode: 'environment' } },  // rimosso "exact" che causa falsi errori
     { video: true }
   ];
 
-  for (const constraint of constraints) {
+  for (const constraint of attempts) {
     try {
       qrStream = await navigator.mediaDevices.getUserMedia(constraint);
-      const video = document.getElementById('qr-video');
       video.srcObject = qrStream;
-      await video.play();
+      // su iOS il play() deve essere chiamato dopo l'evento loadedmetadata
+      await new Promise(resolve => {
+        video.onloadedmetadata = resolve;
+        video.play().catch(resolve); // fallback se l'evento non scatta
+      });
       scanQrLoop();
-      return; // funziona, esco
+      return;
     } catch(e) {
-      continue; // provo il prossimo
+      console.warn('tentativo fotocamera fallito:', e.name, e.message);
+      // se è un errore di permessi negati, inutile riprovare
+      if (e.name === 'NotAllowedError') {
+        document.getElementById('qr-status').textContent = '⚠️ Permesso fotocamera negato. Usa "Carica immagine QR".';
+        return;
+      }
+      // altrimenti proviamo il prossimo constraint
     }
   }
-
-  // tutti i tentativi falliti
   document.getElementById('qr-status').textContent = '⚠️ Fotocamera non disponibile. Usa "Carica immagine QR".';
 }
 
@@ -1808,6 +1909,7 @@ function handleQrFile(event) {
 
 function processQrData(raw) {
   stopCamera();
+  console.log('QR letto:', raw); // ← rimuovi dopo il debug*************************************************************
   try {
     const data = JSON.parse(raw);
     if (!data.classe || !Array.isArray(data.studenti)) throw new Error('formato non valido');
